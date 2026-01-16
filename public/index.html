@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Antigravity Monitor</title>
+    <!-- TODO feature-frontend-separation: Extract styles into public/style.css -->
     <style>
         * {
             margin: 0;
@@ -201,6 +202,7 @@
 
 <body>
     <!-- Chat Container -->
+    <!-- TODO feature-frontend-components: Decompose HTML into reusable templates or components if using a framework. -->
     <div class="chat-container" id="chatContainer">
         <div class="chat-content" id="chatContent">
             <div class="loading">Loading chat...</div>
@@ -218,6 +220,8 @@
         </div>
     </div>
 
+    <!-- TODO feature-frontend-separation: Extract script into public/app.js -->
+    <!-- TODO feature-frontend-state: Refactor global variables into a state management class/store. -->
     <script>
         const chatContainer = document.getElementById('chatContainer');
         const chatContent = document.getElementById('chatContent');
