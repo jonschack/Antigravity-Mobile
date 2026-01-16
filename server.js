@@ -2,6 +2,7 @@
 // TODO feature-dev-experience: Add jest for testing: npm install --save-dev jest
 // TODO feature-dev-experience: Add eslint for linting: npm install --save-dev eslint
 // TODO feature-dev-experience: Add prettier for formatting: npm install --save-dev prettier
+// TODO feature-dev-experience: Create jest.config.js and add a basic smoke test to ensure the test harness is working.
 // TODO feature-structure-init: Move this file to src/server.ts or src/index.js as the entry point.
 import express from 'express';
 import { WebSocketServer } from 'ws';
@@ -25,6 +26,7 @@ let lastSnapshot = null;
 let lastSnapshotHash = null;
 
 // TODO feature-utils: Extract this helper into a generic HTTP utility module.
+// TODO feature-utils: Write unit tests for the utility module.
 // Helper: HTTP GET JSON
 function getJson(url) {
     return new Promise((resolve, reject) => {
@@ -39,6 +41,7 @@ function getJson(url) {
 }
 
 // TODO feature-cdp-service: Create a CdpDiscoveryService class responsible for finding the debug port.
+// TODO feature-cdp-service: Write unit tests for CdpDiscoveryService.
 // Find Antigravity CDP endpoint
 async function discoverCDP() {
     for (const port of PORTS) {
@@ -56,6 +59,7 @@ async function discoverCDP() {
 
 // TODO feature-cdp-service: Create a CdpClient class to encapsulate the WebSocket connection and JSON-RPC protocol.
 // TODO feature-cdp-service: Implement proper error handling and reconnection logic within the CdpClient.
+// TODO feature-cdp-service: Write unit tests for CdpClient.
 // Connect to CDP
 async function connectCDP(url) {
     const ws = new WebSocket(url);
@@ -97,6 +101,7 @@ async function connectCDP(url) {
 
 // TODO feature-snapshot-service: Create a SnapshotService class.
 // TODO feature-snapshot-service: Extract the browser-side script into a separate file (e.g., src/scripts/capture.js) for better readability and potentially testing (even if just syntax checking).
+// TODO feature-snapshot-service: Write unit tests for SnapshotService, mocking the CDP connection.
 // Capture chat snapshot
 async function captureSnapshot(cdp) {
     const CAPTURE_SCRIPT = `(() => {
@@ -153,6 +158,7 @@ async function captureSnapshot(cdp) {
 
 // TODO feature-injection-service: Create a MessageInjectionService class.
 // TODO feature-injection-service: Extract the browser-side script into a separate file (e.g., src/scripts/inject.js).
+// TODO feature-injection-service: Write unit tests for MessageInjectionService, mocking the CDP connection.
 // Inject message into Antigravity
 async function injectMessage(cdp, text) {
     const EXPRESSION = `(async () => {
@@ -210,6 +216,7 @@ async function injectMessage(cdp, text) {
 }
 
 // TODO feature-utils: Move to src/utils/hashing.js
+// TODO feature-utils: Write unit tests for hashing utility.
 // Simple hash function
 function hashString(str) {
     let hash = 0;
@@ -234,6 +241,7 @@ async function initCDP() {
 }
 
 // TODO feature-polling-manager: Create a PollingManager or BackgroundJobService to handle periodic tasks.
+// TODO feature-polling-manager: Write unit tests for PollingManager.
 // Background polling
 async function startPolling(wss) {
     setInterval(async () => {
@@ -269,7 +277,9 @@ async function startPolling(wss) {
 }
 
 // TODO feature-http-layer: Extract Express app creation into src/app.js.
+// TODO feature-http-layer: Add tests for HTTP endpoints (e.g. using supertest).
 // TODO feature-websocket-layer: Extract WebSocket logic into a WebSocketController or similar.
+// TODO feature-websocket-layer: Add tests for WebSocket logic.
 // Create Express app
 async function createServer() {
     const app = express();
