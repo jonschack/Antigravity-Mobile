@@ -1,4 +1,4 @@
-# Antigravity Shit-Chat Mobile Monitor
+# Antigravity Mobile Monitor
 
 Need to go to the bathroom? But Opus 4.5 might be done with that big task soon? Want to eat lunch? But there's more tokens left before they reset right after lunch?
 
