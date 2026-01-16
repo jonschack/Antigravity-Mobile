@@ -5,7 +5,8 @@
     "description": "Mobile web interface for monitoring Antigravity chat via visual snapshots",
     "scripts": {
         "start": "node server.js",
-        "dev": "node server.js"
+        "dev": "node server.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
         "ws": "^8.18.0",
