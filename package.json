@@ -1,18 +1,29 @@
 {
-    "name": "ag-mobile-monitor",
-    "version": "1.0.0",
-    "type": "module",
-    "description": "Mobile web interface for monitoring Antigravity chat via visual snapshots",
-    "scripts": {
-        "start": "node server.js",
-        "dev": "node server.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "dependencies": {
-        "ws": "^8.18.0",
-        "express": "^4.18.2"
-    },
-    "engines": {
-        "node": ">=16.0.0"
-    }
+  "name": "ag-mobile-monitor",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mobile web interface for monitoring Antigravity chat via visual snapshots",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.0.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.0"
+  }
 }
