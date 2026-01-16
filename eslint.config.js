@@ -16,7 +16,7 @@ export default [
       },
     },
     rules: {
-      'no-console': 'off',
+      'no-console': 'warn',
       'no-unused-vars': [
         'error',
         {
