@@ -129,6 +129,10 @@ describe('App', () => {
         consoleErrorSpy.mockRestore();
         consoleErrorSpy = null;
       }
+      mockStopPolling.mockReset();
+      mockCdpClose.mockReset();
+      mockWssClose.mockReset();
+      mockClose.mockReset();
     });
 
     const expectConsoleErrorWith = async (mockImpl, errorMessage) => {
