@@ -17,8 +17,32 @@ export class APIService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.reason || 'Unknown error');
+      const contentType = response.headers.get('content-type') || '';
+      let reason = null;
+
+      if (contentType.includes('application/json')) {
+        try {
+          const errorBody = await response.json();
+          if (errorBody && typeof errorBody.reason === 'string') {
+            reason = errorBody.reason;
+          }
+        } catch (e) {
+          // Ignore JSON parse errors and fall back to text or generic message
+        }
+      }
+
+      if (!reason) {
+        try {
+          const text = await response.text();
+          if (text) {
+            reason = text;
+          }
+        } catch (e) {
+          // Ignore text read errors and fall back to generic message
+        }
+      }
+
+      throw new Error(reason || 'Unknown error');
     }
   }
 }
