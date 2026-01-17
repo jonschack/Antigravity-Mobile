@@ -3,6 +3,7 @@ export class StateManager {
     this.state = {
       autoRefreshEnabled: true,
       userIsScrolling: false,
+      lastScrollPosition: 0,
     };
     this.listeners = [];
     this.scrollTimeout = null;
