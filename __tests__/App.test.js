@@ -115,12 +115,28 @@ describe('App', () => {
   });
 
   describe('stop()', () => {
+    let consoleErrorSpy;
+
     beforeEach(async () => {
       mockFindEndpoint.mockResolvedValue({ port: 9222, url: 'ws://localhost:9222' });
       mockConnect.mockResolvedValue();
       await app.initialize();
       await app.start();
     });
+
+    afterEach(() => {
+      if (consoleErrorSpy) {
+        consoleErrorSpy.mockRestore();
+        consoleErrorSpy = null;
+      }
+    });
+
+    const expectConsoleErrorWith = async (mockImpl, errorMessage) => {
+      consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockImpl();
+      await app.stop();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(errorMessage, expect.any(Error));
+    };
 
     it('should stop polling manager when stop is called', async () => {
       await app.stop();
@@ -155,90 +171,44 @@ describe('App', () => {
     });
 
     it('should handle errors gracefully when stopping polling manager fails', async () => {
-      mockStopPolling.mockImplementation(() => {
-        throw new Error('Polling stop failed');
-      });
-
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await app.stop();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error while stopping polling manager:',
-        expect.any(Error)
+      await expectConsoleErrorWith(
+        () => mockStopPolling.mockImplementation(() => { throw new Error('Polling stop failed'); }),
+        'Error while stopping polling manager:'
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle errors gracefully when closing CDP client fails', async () => {
-      mockCdpClose.mockImplementation(() => {
-        throw new Error('CDP close failed');
-      });
-
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await app.stop();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error while closing CDP client:',
-        expect.any(Error)
+      await expectConsoleErrorWith(
+        () => mockCdpClose.mockImplementation(() => { throw new Error('CDP close failed'); }),
+        'Error while closing CDP client:'
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle errors gracefully when closing WebSocket client fails', async () => {
       const mockClient = {
         readyState: 1,
-        close: jest.fn(() => {
-          throw new Error('Client close failed');
-        }),
+        close: jest.fn(() => { throw new Error('Client close failed'); }),
       };
       mockWssInstance.clients = new Set([mockClient]);
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await app.stop();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error while closing WebSocket client:',
-        expect.any(Error)
+      await expectConsoleErrorWith(
+        () => {},
+        'Error while closing WebSocket client:'
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle errors gracefully when closing WebSocket server fails', async () => {
-      mockWssClose.mockImplementation(() => {
-        throw new Error('WSS close failed');
-      });
-
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await app.stop();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error while closing WebSocket server:',
-        expect.any(Error)
+      await expectConsoleErrorWith(
+        () => mockWssClose.mockImplementation(() => { throw new Error('WSS close failed'); }),
+        'Error while closing WebSocket server:'
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle errors gracefully when closing HTTP server fails', async () => {
-      mockClose.mockImplementation((cb) => cb(new Error('Server close failed')));
-
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      await app.stop();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error while closing HTTP server:',
-        expect.any(Error)
+      await expectConsoleErrorWith(
+        () => mockClose.mockImplementation((cb) => cb(new Error('Server close failed'))),
+        'Error while closing HTTP server:'
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle stop being called when services are not initialized', async () => {
