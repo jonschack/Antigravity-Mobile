@@ -14,8 +14,23 @@ import { PollingManager } from './services/PollingManager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Main Application class acting as the composition root.
+ * Manages the lifecycle of services and the HTTP/WebSocket server.
+ */
 export class App {
+  /**
+   * Creates an instance of App.
+   * @param {Object} config - Configuration object.
+   * @param {number[]} config.CDP_PORTS - List of ports to scan for CDP.
+   * @param {number} config.POLL_INTERVAL - Interval in ms for polling snapshots.
+   * @param {number} config.PORT - Port to run the HTTP server on.
+   * @throws {Error} If required config properties are missing.
+   */
   constructor(config) {
+    if (!config || !config.CDP_PORTS || !config.POLL_INTERVAL || !config.PORT) {
+      throw new Error('Invalid configuration: CDP_PORTS, POLL_INTERVAL, and PORT are required.');
+    }
     this.config = config;
     this.cdpClient = null;
     this.snapshotService = null;
@@ -27,6 +42,11 @@ export class App {
     this.app = express();
   }
 
+  /**
+   * Initializes the application services.
+   * Discovers CDP endpoint, connects to it, and sets up services.
+   * @returns {Promise<void>}
+   */
   async initialize() {
     // Discovery
     const discoveryService = new CdpDiscoveryService(this.config.CDP_PORTS);
@@ -55,6 +75,10 @@ export class App {
     );
   }
 
+  /**
+   * Sets up the HTTP server and WebSocket server.
+   * @private
+   */
   _setupServer() {
     this.server = http.createServer(this.app);
     this.wss = new WebSocketServer({ server: this.server });
@@ -104,6 +128,12 @@ export class App {
     });
   }
 
+  /**
+   * Callback for snapshot updates.
+   * Updates local state and broadcasts to WebSocket clients.
+   * @param {Object} snapshot - The new snapshot data.
+   * @private
+   */
   _onSnapshotUpdate(snapshot) {
     this.lastSnapshot = snapshot;
     console.log(`📸 Snapshot updated`);
@@ -121,6 +151,11 @@ export class App {
     });
   }
 
+  /**
+   * Starts the polling manager and the HTTP server.
+   * @returns {Promise<void>} Resolves when the server is listening.
+   * @throws {Error} If called before initialize().
+   */
   async start() {
     if (!this.pollingManager) {
       throw new Error('App not initialized. Call initialize() first.');
@@ -128,78 +163,19 @@ export class App {
 
     this.pollingManager.start();
 
-    return new Promise((resolve) => {
-      this.server.listen(this.config.PORT, '0.0.0.0', () => {
+    return new Promise((resolve, reject) => {
+      this.server.listen(this.config.PORT, '0.0.0.0', (err) => {
+        if (err) {
+            return reject(err);
+        }
         console.log(`🚀 Server running on http://0.0.0.0:${this.config.PORT}`);
         console.log(`📱 Access from mobile: http://<your-ip>:${this.config.PORT}`);
         resolve();
       });
+
+      this.server.on('error', (err) => {
+        reject(err);
+      });
     });
-  }
-
-  async stop() {
-    // Stop polling if active
-    if (this.pollingManager && typeof this.pollingManager.stop === 'function') {
-      try {
-        this.pollingManager.stop();
-      } catch (err) {
-        console.error('Error while stopping polling manager:', err);
-      }
-    }
-
-    // Close CDP client connection if present
-    if (this.cdpClient) {
-      try {
-        if (typeof this.cdpClient.disconnect === 'function') {
-          await this.cdpClient.disconnect();
-        } else if (typeof this.cdpClient.close === 'function') {
-          await this.cdpClient.close();
-        }
-      } catch (err) {
-        console.error('Error while closing CDP client:', err);
-      }
-    }
-
-    // Close WebSocket connections and server
-    if (this.wss) {
-      try {
-        // Close all connected clients
-        this.wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            try {
-              client.close();
-            } catch (err) {
-              console.error('Error while closing WebSocket client:', err);
-            }
-          }
-        });
-
-        // Close the WebSocket server itself
-        await new Promise((resolve) => {
-          this.wss.close(() => {
-            resolve();
-          });
-        });
-      } catch (err) {
-        console.error('Error while closing WebSocket server:', err);
-      }
-    }
-
-    // Close HTTP server
-    if (this.server) {
-      try {
-        await new Promise((resolve, reject) => {
-          this.server.close((err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          });
-        });
-      } catch (err) {
-        console.error('Error while closing HTTP server:', err);
-      }
-    }
   }
 }
