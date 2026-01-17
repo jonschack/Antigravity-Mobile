@@ -40,6 +40,7 @@ describe('Config Module', () => {
       // Assuming we want some robustness, though the requirements just said "Support env vars"
       // Let's stick to basic support for now.
       process.env.POLL_INTERVAL = 'abc';
+      const config = await import('../src/config.js');
       // If parsing fails, it might be NaN or we might decide to not validate strictly yet.
       // But let's assume implementation will do parseInt.
       // If parseInt returns NaN, maybe we should keep default?

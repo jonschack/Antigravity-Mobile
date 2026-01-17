@@ -86,7 +86,7 @@ describe('ChatComponent', () => {
   });
 
   test('should scroll to bottom on FAB click', () => {
-      new ChatComponent('chatContainer', 'chatContent', 'scrollToBottom');
+      const chat = new ChatComponent('chatContainer', 'chatContent', 'scrollToBottom');
       fab.click();
       expect(container.scrollTo).toHaveBeenCalledWith({
           top: 1000,

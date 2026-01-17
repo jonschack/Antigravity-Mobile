@@ -17,13 +17,7 @@ export class WebSocketService {
     };
 
     this.ws.onmessage = (event) => {
-      let data;
-      try {
-        data = JSON.parse(event.data);
-      } catch (error) {
-        console.error('Failed to parse WebSocket message as JSON:', error, event.data);
-        return;
-      }
+      const data = JSON.parse(event.data);
       if (this.onMessage) this.onMessage(data);
     };
 

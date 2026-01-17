@@ -11,14 +11,10 @@ import { CdpClient } from './services/CdpClient.js';
 import { SnapshotService } from './services/SnapshotService.js';
 import { MessageInjectionService } from './services/MessageInjectionService.js';
 import { PollingManager } from './services/PollingManager.js';
+import { PORTS, POLL_INTERVAL } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// TODO feature-config-module: Extract configuration constants into a separate config module (e.g., src/config.js).
-// TODO feature-config-module: Support environment variables for port configuration.
-const PORTS = [9000, 9001, 9002, 9003];
-const POLL_INTERVAL = 3000; // 3 seconds
 
 // TODO feature-app-bootstrap: Remove global state. Pass these dependencies via dependency injection or a context object.
 // Shared CDP connection
