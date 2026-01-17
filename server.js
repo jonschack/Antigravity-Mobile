@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// TODO feature-dev-experience: Add jest for testing: npm install --save-dev jest
-// TODO feature-dev-experience: Add eslint for linting: npm install --save-dev eslint
-// TODO feature-dev-experience: Add prettier for formatting: npm install --save-dev prettier
-// TODO feature-dev-experience: Create jest.config.js and add a basic smoke test to ensure the test harness is working.
 // TODO feature-structure-init: Move this file to src/server.ts or src/index.js as the entry point.
 import express from 'express';
 import { WebSocketServer } from 'ws';
@@ -29,32 +25,46 @@ let lastSnapshotHash = null;
 // TODO feature-utils: Write unit tests for the utility module.
 // Helper: HTTP GET JSON
 function getJson(url) {
-    return new Promise((resolve, reject) => {
-        http.get(url, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
-            });
-        }).on('error', reject);
-    });
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on('error', reject);
+  });
 }
 
 // TODO feature-cdp-service: Create a CdpDiscoveryService class responsible for finding the debug port.
 // TODO feature-cdp-service: Write unit tests for CdpDiscoveryService.
 // Find Antigravity CDP endpoint
 async function discoverCDP() {
-    for (const port of PORTS) {
-        try {
-            const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-            // Look for workbench specifically (where #cascade exists, which has the chat) 
-            const found = list.find(t => t.url?.includes('workbench.html') || (t.title && t.title.includes('workbench')));
-            if (found && found.webSocketDebuggerUrl) {
-                return { port, url: found.webSocketDebuggerUrl };
-            }
-        } catch (e) { }
+  for (const port of PORTS) {
+    try {
+      const list = await getJson(`http://127.0.0.1:${port}/json/list`);
+      // Look for workbench specifically (where #cascade exists, which has the chat)
+      const found = list.find(
+        (t) =>
+          t.url?.includes('workbench.html') ||
+          (t.title && t.title.includes('workbench')),
+      );
+      if (found && found.webSocketDebuggerUrl) {
+        return { port, url: found.webSocketDebuggerUrl };
+      }
+    } catch (_e) {
+      // Ignore connection errors during discovery
     }
-    throw new Error('CDP not found. Is Antigravity started with --remote-debugging-port=9000?');
+  }
+  throw new Error(
+    'CDP not found. Is Antigravity started with --remote-debugging-port=9000?',
+  );
 }
 
 // TODO feature-cdp-service: Create a CdpClient class to encapsulate the WebSocket connection and JSON-RPC protocol.
@@ -62,41 +72,44 @@ async function discoverCDP() {
 // TODO feature-cdp-service: Write unit tests for CdpClient.
 // Connect to CDP
 async function connectCDP(url) {
-    const ws = new WebSocket(url);
-    await new Promise((resolve, reject) => {
-        ws.on('open', resolve);
-        ws.on('error', reject);
+  const ws = new WebSocket(url);
+  await new Promise((resolve, reject) => {
+    ws.on('open', resolve);
+    ws.on('error', reject);
+  });
+
+  let idCounter = 1;
+  const call = (method, params) =>
+    new Promise((resolve, reject) => {
+      const id = idCounter++;
+      const handler = (msg) => {
+        const data = JSON.parse(msg);
+        if (data.id === id) {
+          ws.off('message', handler);
+          if (data.error) reject(data.error);
+          else resolve(data.result);
+        }
+      };
+      ws.on('message', handler);
+      ws.send(JSON.stringify({ id, method, params }));
     });
 
-    let idCounter = 1;
-    const call = (method, params) => new Promise((resolve, reject) => {
-        const id = idCounter++;
-        const handler = (msg) => {
-            const data = JSON.parse(msg);
-            if (data.id === id) {
-                ws.off('message', handler);
-                if (data.error) reject(data.error);
-                else resolve(data.result);
-            }
-        };
-        ws.on('message', handler);
-        ws.send(JSON.stringify({ id, method, params }));
-    });
+  const contexts = [];
+  ws.on('message', (msg) => {
+    try {
+      const data = JSON.parse(msg);
+      if (data.method === 'Runtime.executionContextCreated') {
+        contexts.push(data.params.context);
+      }
+    } catch (_e) {
+      // Ignore parse errors from non-JSON messages if any
+    }
+  });
 
-    const contexts = [];
-    ws.on('message', (msg) => {
-        try {
-            const data = JSON.parse(msg);
-            if (data.method === 'Runtime.executionContextCreated') {
-                contexts.push(data.params.context);
-            }
-        } catch (e) { }
-    });
+  await call('Runtime.enable', {});
+  await new Promise((r) => setTimeout(r, 1000));
 
-    await call("Runtime.enable", {});
-    await new Promise(r => setTimeout(r, 1000));
-
-    return { ws, call, contexts };
+  return { ws, call, contexts };
 }
 
 // TODO feature-snapshot-service: Create a SnapshotService class.
@@ -104,7 +117,7 @@ async function connectCDP(url) {
 // TODO feature-snapshot-service: Write unit tests for SnapshotService, mocking the CDP connection.
 // Capture chat snapshot
 async function captureSnapshot(cdp) {
-    const CAPTURE_SCRIPT = `(() => {
+  const CAPTURE_SCRIPT = `(() => {
         const cascade = document.getElementById('cascade');
         if (!cascade) return { error: 'cascade not found' };
         
@@ -139,21 +152,23 @@ async function captureSnapshot(cdp) {
         };
     })()`;
 
-    for (const ctx of cdp.contexts) {
-        try {
-            const result = await cdp.call("Runtime.evaluate", {
-                expression: CAPTURE_SCRIPT,
-                returnByValue: true,
-                contextId: ctx.id
-            });
+  for (const ctx of cdp.contexts) {
+    try {
+      const result = await cdp.call('Runtime.evaluate', {
+        expression: CAPTURE_SCRIPT,
+        returnByValue: true,
+        contextId: ctx.id,
+      });
 
-            if (result.result && result.result.value) {
-                return result.result.value;
-            }
-        } catch (e) { }
+      if (result.result && result.result.value) {
+        return result.result.value;
+      }
+    } catch (_e) {
+      // Continue to next context on failure
     }
+  }
 
-    return null;
+  return null;
 }
 
 // TODO feature-injection-service: Create a MessageInjectionService class.
@@ -161,7 +176,7 @@ async function captureSnapshot(cdp) {
 // TODO feature-injection-service: Write unit tests for MessageInjectionService, mocking the CDP connection.
 // Inject message into Antigravity
 async function injectMessage(cdp, text) {
-    const EXPRESSION = `(async () => {
+  const EXPRESSION = `(async () => {
         const cancel = document.querySelector('[data-tooltip-id="input-send-button-cancel-tooltip"]');
         if (cancel && cancel.offsetParent !== null) return { ok:false, reason:"busy" };
 
@@ -197,83 +212,89 @@ async function injectMessage(cdp, text) {
         return { ok:true, method:"enter_keypress" };
     })()`;
 
-    for (const ctx of cdp.contexts) {
-        try {
-            const result = await cdp.call("Runtime.evaluate", {
-                expression: EXPRESSION,
-                returnByValue: true,
-                awaitPromise: true,
-                contextId: ctx.id
-            });
+  for (const ctx of cdp.contexts) {
+    try {
+      const result = await cdp.call('Runtime.evaluate', {
+        expression: EXPRESSION,
+        returnByValue: true,
+        awaitPromise: true,
+        contextId: ctx.id,
+      });
 
-            if (result.result && result.result.value) {
-                return result.result.value;
-            }
-        } catch (e) { }
+      if (result.result && result.result.value) {
+        return result.result.value;
+      }
+    } catch (_e) {
+      // Continue to next context on failure
     }
+  }
 
-    return { ok: false, reason: "no_context" };
+  return { ok: false, reason: 'no_context' };
 }
 
 // TODO feature-utils: Move to src/utils/hashing.js
 // TODO feature-utils: Write unit tests for hashing utility.
 // Simple hash function
 function hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return hash.toString(36);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
 }
 
 // TODO feature-app-bootstrap: This should be part of the main application start sequence, not a standalone function.
 // Initialize CDP connection
 async function initCDP() {
-    console.log('🔍 Discovering VS Code CDP endpoint...');
-    const cdpInfo = await discoverCDP();
-    console.log(`✅ Found VS Code on port ${cdpInfo.port}`);
+  console.log('🔍 Discovering VS Code CDP endpoint...');
+  const cdpInfo = await discoverCDP();
+  console.log(`✅ Found VS Code on port ${cdpInfo.port}`);
 
-    console.log('🔌 Connecting to CDP...');
-    cdpConnection = await connectCDP(cdpInfo.url);
-    console.log(`✅ Connected! Found ${cdpConnection.contexts.length} execution contexts\n`);
+  console.log('🔌 Connecting to CDP...');
+  cdpConnection = await connectCDP(cdpInfo.url);
+  console.log(
+    `✅ Connected! Found ${cdpConnection.contexts.length} execution contexts\n`,
+  );
 }
 
 // TODO feature-polling-manager: Create a PollingManager or BackgroundJobService to handle periodic tasks.
 // TODO feature-polling-manager: Write unit tests for PollingManager.
 // Background polling
 async function startPolling(wss) {
-    setInterval(async () => {
-        if (!cdpConnection) return;
+  setInterval(async () => {
+    if (!cdpConnection) return;
 
-        try {
-            const snapshot = await captureSnapshot(cdpConnection);
-            if (snapshot && !snapshot.error) {
-                const hash = hashString(snapshot.html);
+    try {
+      const snapshot = await captureSnapshot(cdpConnection);
+      if (snapshot && !snapshot.error) {
+        const hash = hashString(snapshot.html);
 
-                // Only update if content changed
-                if (hash !== lastSnapshotHash) {
-                    lastSnapshot = snapshot;
-                    lastSnapshotHash = hash;
+        // Only update if content changed
+        if (hash !== lastSnapshotHash) {
+          lastSnapshot = snapshot;
+          lastSnapshotHash = hash;
 
-                    // Broadcast to all connected clients
-                    wss.clients.forEach(client => {
-                        if (client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify({
-                                type: 'snapshot_update',
-                                timestamp: new Date().toISOString()
-                            }));
-                        }
-                    });
-
-                    console.log(`📸 Snapshot updated (hash: ${hash})`);
-                }
+          // Broadcast to all connected clients
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: 'snapshot_update',
+                  timestamp: new Date().toISOString(),
+                }),
+              );
             }
-        } catch (err) {
-            console.error('Poll error:', err.message);
+          });
+
+          console.log(`📸 Snapshot updated (hash: ${hash})`);
         }
-    }, POLL_INTERVAL);
+      }
+    } catch (err) {
+      console.error('Poll error:', err.message);
+    }
+  }, POLL_INTERVAL);
 }
 
 // TODO feature-http-layer: Extract Express app creation into src/app.js.
@@ -282,74 +303,74 @@ async function startPolling(wss) {
 // TODO feature-websocket-layer: Add tests for WebSocket logic.
 // Create Express app
 async function createServer() {
-    const app = express();
-    const server = http.createServer(app);
-    const wss = new WebSocketServer({ server });
+  const app = express();
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server });
 
-    app.use(express.json());
-    app.use(express.static(join(__dirname, 'public')));
+  app.use(express.json());
+  app.use(express.static(join(__dirname, 'public')));
 
-    // Get current snapshot
-    app.get('/snapshot', (req, res) => {
-        if (!lastSnapshot) {
-            return res.status(503).json({ error: 'No snapshot available yet' });
-        }
-        res.json(lastSnapshot);
+  // Get current snapshot
+  app.get('/snapshot', (req, res) => {
+    if (!lastSnapshot) {
+      return res.status(503).json({ error: 'No snapshot available yet' });
+    }
+    res.json(lastSnapshot);
+  });
+
+  // Send message
+  app.post('/send', async (req, res) => {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message required' });
+    }
+
+    if (!cdpConnection) {
+      return res.status(503).json({ error: 'CDP not connected' });
+    }
+
+    const result = await injectMessage(cdpConnection, message);
+
+    if (result.ok) {
+      res.json({ success: true, method: result.method });
+    } else {
+      res.status(500).json({ success: false, reason: result.reason });
+    }
+  });
+
+  // WebSocket connection
+  wss.on('connection', (ws) => {
+    console.log('📱 Client connected');
+
+    ws.on('close', () => {
+      console.log('📱 Client disconnected');
     });
+  });
 
-    // Send message
-    app.post('/send', async (req, res) => {
-        const { message } = req.body;
-
-        if (!message) {
-            return res.status(400).json({ error: 'Message required' });
-        }
-
-        if (!cdpConnection) {
-            return res.status(503).json({ error: 'CDP not connected' });
-        }
-
-        const result = await injectMessage(cdpConnection, message);
-
-        if (result.ok) {
-            res.json({ success: true, method: result.method });
-        } else {
-            res.status(500).json({ success: false, reason: result.reason });
-        }
-    });
-
-    // WebSocket connection
-    wss.on('connection', (ws) => {
-        console.log('📱 Client connected');
-
-        ws.on('close', () => {
-            console.log('📱 Client disconnected');
-        });
-    });
-
-    return { server, wss };
+  return { server, wss };
 }
 
 // TODO feature-app-bootstrap: Refactor into a clean composition root.
 // Main
 async function main() {
-    try {
-        await initCDP();
+  try {
+    await initCDP();
 
-        const { server, wss } = await createServer();
+    const { server, wss } = await createServer();
 
-        // Start background polling
-        startPolling(wss);
+    // Start background polling
+    startPolling(wss);
 
-        const PORT = process.env.PORT || 3000;
-        server.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-            console.log(`📱 Access from mobile: http://<your-ip>:${PORT}`);
-        });
-    } catch (err) {
-        console.error('❌ Fatal error:', err.message);
-        process.exit(1);
-    }
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
+      console.log(`📱 Access from mobile: http://<your-ip>:${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Fatal error:', err.message);
+    process.exit(1);
+  }
 }
 
 main();
