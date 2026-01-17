@@ -17,8 +17,9 @@ describe('WebSocket Layer', () => {
   });
 
   afterAll((done) => {
-    wss.close();
-    server.close(done);
+    wss.close(() => {
+      server.close(done);
+    });
   });
 
   it('should accept connection', (done) => {
