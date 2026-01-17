@@ -1,8 +1,11 @@
+import { ToastComponent } from './Toast.js';
+
 export class InputComponent {
   constructor(inputId, btnId, onSend) {
     this.input = document.getElementById(inputId);
     this.btn = document.getElementById(btnId);
     this.onSend = onSend;
+    this.toast = new ToastComponent();
 
     this.bindEvents();
   }
@@ -35,7 +38,7 @@ export class InputComponent {
       this.input.value = '';
       this.input.style.height = '44px';
     } catch (error) {
-      alert(`Failed to send: ${error.message}`);
+      this.toast.show(`Failed to send: ${error.message}`, 'error');
     } finally {
       this.btn.disabled = false;
       this.btn.textContent = 'Send';

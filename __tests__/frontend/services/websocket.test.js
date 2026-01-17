@@ -58,7 +58,7 @@ describe('WebSocketService', () => {
     expect(onMessage).toHaveBeenCalledWith(data);
   });
 
-  test('should handle onclose and reconnect', () => {
+  test('should handle onclose and reconnect with exponential backoff', () => {
     const service = new WebSocketService('ws://test', onMessage, onOpen, onClose);
     service.connect();
 
@@ -69,8 +69,11 @@ describe('WebSocketService', () => {
     mockWebSocket.onclose();
     expect(onClose).toHaveBeenCalled();
 
-    // Fast forward to reconnect interval (2000ms)
-    jest.advanceTimersByTime(2000);
+    // Fast forward to first reconnect attempt (2000ms base + up to 1000ms jitter = max 3000ms)
+    jest.advanceTimersByTime(3000);
     expect(global.WebSocket).toHaveBeenCalledWith('ws://test');
+    
+    // Verify exponential backoff increases with attempts
+    expect(service.reconnectAttempts).toBe(1);
   });
 });

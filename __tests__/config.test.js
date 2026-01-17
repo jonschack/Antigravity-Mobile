@@ -36,13 +36,10 @@ describe('Config Module', () => {
     expect(config.PORTS).toEqual([8000, 8001]);
   });
 
-  it('should fallback to defaults if invalid values provided', async () => {
-      // Assuming we want some robustness, though the requirements just said "Support env vars"
-      // Let's stick to basic support for now.
-      process.env.POLL_INTERVAL = 'abc';
-      // If parsing fails, it might be NaN or we might decide to not validate strictly yet.
-      // But let's assume implementation will do parseInt.
-      // If parseInt returns NaN, maybe we should keep default?
-      // For now, let's just create the file.
+  it('should fallback to defaults if invalid POLL_INTERVAL provided', async () => {
+    process.env.POLL_INTERVAL = 'abc';
+    const config = await import('../src/config.js');
+    // When parseInt fails, should fallback to default value
+    expect(config.POLL_INTERVAL).toBe(3000);
   });
 });
