@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import express from 'express';
-import { WebSocketServer } from 'ws';
 import http from 'http';
 import WebSocket from 'ws';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
+import { createApp } from './app.js';
+import { createWebSocketServer } from './websocket.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -296,56 +296,19 @@ async function startPolling(wss) {
   }, POLL_INTERVAL);
 }
 
-// TODO feature-http-layer: Extract Express app creation into src/app.js.
-// TODO feature-http-layer: Add tests for HTTP endpoints (e.g. using supertest).
-// TODO feature-websocket-layer: Extract WebSocket logic into a WebSocketController or similar.
-// TODO feature-websocket-layer: Add tests for WebSocket logic.
 // Create Express app
 async function createServer() {
-  const app = express();
+  const app = createApp({
+    getSnapshot: () => lastSnapshot,
+    sendToCdp: async (message) => {
+      if (!cdpConnection) {
+        throw new Error('CDP not connected');
+      }
+      return await injectMessage(cdpConnection, message);
+    },
+  });
   const server = http.createServer(app);
-  const wss = new WebSocketServer({ server });
-
-  app.use(express.json());
-  app.use(express.static(join(__dirname, '../public')));
-
-  // Get current snapshot
-  app.get('/snapshot', (req, res) => {
-    if (!lastSnapshot) {
-      return res.status(503).json({ error: 'No snapshot available yet' });
-    }
-    res.json(lastSnapshot);
-  });
-
-  // Send message
-  app.post('/send', async (req, res) => {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: 'Message required' });
-    }
-
-    if (!cdpConnection) {
-      return res.status(503).json({ error: 'CDP not connected' });
-    }
-
-    const result = await injectMessage(cdpConnection, message);
-
-    if (result.ok) {
-      res.json({ success: true, method: result.method });
-    } else {
-      res.status(500).json({ success: false, reason: result.reason });
-    }
-  });
-
-  // WebSocket connection
-  wss.on('connection', (ws) => {
-    console.log('📱 Client connected');
-
-    ws.on('close', () => {
-      console.log('📱 Client disconnected');
-    });
-  });
+  const wss = createWebSocketServer(server);
 
   return { server, wss };
 }
