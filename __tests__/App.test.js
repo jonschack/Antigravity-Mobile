@@ -6,10 +6,13 @@ const mockServer = {
   listen: mockListen,
   close: mockClose,
 };
+const mockAppUse = jest.fn();
+const mockAppGet = jest.fn();
+const mockAppPost = jest.fn();
 const mockExpressApp = {
-  use: jest.fn(),
-  get: jest.fn(),
-  post: jest.fn(),
+  use: mockAppUse,
+  get: mockAppGet,
+  post: mockAppPost,
 };
 const mockExpress = jest.fn(() => mockExpressApp);
 mockExpress.static = jest.fn();
@@ -29,6 +32,11 @@ const mockCdpClose = jest.fn();
 const mockStartPolling = jest.fn();
 const mockStopPolling = jest.fn();
 const mockInject = jest.fn();
+
+// Create a mock PollingManager class explicitly so we can export it and use it in tests
+const MockPollingManager = jest.fn(() => ({
+    start: mockStartPolling,
+}));
 
 jest.unstable_mockModule('express', () => ({
   default: mockExpress,
@@ -91,6 +99,7 @@ describe('App', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockWebSocketServerClients.clear();
     app = new App(config);
   });
 
