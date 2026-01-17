@@ -189,14 +189,14 @@ describe('App', () => {
     });
 
     it('should handle errors gracefully when closing WebSocket client fails', async () => {
-      const mockClient = {
-        readyState: 1,
-        close: jest.fn(() => { throw new Error('Client close failed'); }),
-      };
-      mockWssInstance.clients = new Set([mockClient]);
-
       await expectConsoleErrorWith(
-        () => {},
+        () => {
+          const mockClient = {
+            readyState: 1,
+            close: jest.fn(() => { throw new Error('Client close failed'); }),
+          };
+          mockWssInstance.clients = new Set([mockClient]);
+        },
         'Error while closing WebSocket client:'
       );
     });
