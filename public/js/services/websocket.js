@@ -47,7 +47,7 @@ export class WebSocketService {
 
       // Exponential backoff with jitter
       const backoffTime = Math.min(
-        this.reconnectInterval * Math.pow(this.backoffMultiplier, this.reconnectAttempts),
+        this.reconnectInterval * (this.backoffMultiplier ** this.reconnectAttempts),
         this.maxReconnectInterval
       );
       const jitter = Math.random() * 1000; // Add up to 1 second of jitter
