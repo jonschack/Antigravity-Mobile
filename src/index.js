@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// TODO feature-structure-init: Move this file to src/server.ts or src/index.js as the entry point.
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import http from 'http';
@@ -308,7 +307,7 @@ async function createServer() {
   const wss = new WebSocketServer({ server });
 
   app.use(express.json());
-  app.use(express.static(join(__dirname, 'public')));
+  app.use(express.static(join(__dirname, '../public')));
 
   // Get current snapshot
   app.get('/snapshot', (req, res) => {
