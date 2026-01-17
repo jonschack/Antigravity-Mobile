@@ -24,8 +24,8 @@ export class StateManager {
   setAutoRefresh(enabled, userInitiated = false) {
     if (this.state.autoRefreshEnabled !== enabled) {
       this.state.autoRefreshEnabled = enabled;
-      if (userInitiated) {
-        this.state.autoRefreshDisabledByUser = !enabled;
+      if (userInitiated && !enabled) {
+        this.state.autoRefreshDisabledByUser = true;
       }
       this.notify();
     }
