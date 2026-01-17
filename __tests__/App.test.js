@@ -120,6 +120,7 @@ describe('App', () => {
     beforeEach(async () => {
       mockFindEndpoint.mockResolvedValue({ port: 9222, url: 'ws://localhost:9222' });
       mockConnect.mockResolvedValue();
+      mockWssInstance.clients = new Set();
       await app.initialize();
       await app.start();
     });
