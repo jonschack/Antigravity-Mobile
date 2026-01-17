@@ -54,7 +54,7 @@ export class StateManager {
     // Re-enable auto refresh after 10s of idle, but only if not explicitly disabled by user
     this.idleTimer = setTimeout(() => {
       if (!this.state.autoRefreshDisabledByUser) {
-        this.setAutoRefresh(true);
+        this.setAutoRefresh(true, false); // false = not user-initiated
       }
     }, 10000);
   }

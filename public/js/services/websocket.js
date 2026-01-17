@@ -5,7 +5,8 @@ export class WebSocketService {
     this.onOpen = onOpen;
     this.onClose = onClose;
     this.ws = null;
-    this.reconnectInterval = 2000;
+    this.initialReconnectInterval = 2000; // Store initial value
+    this.reconnectInterval = this.initialReconnectInterval;
     this.maxReconnectInterval = 30000; // Max 30 seconds
     this.backoffMultiplier = 1.5; // Exponential backoff multiplier
     this.reconnectAttempts = 0;
@@ -19,7 +20,7 @@ export class WebSocketService {
       console.log('WebSocket connected');
       // Reset reconnect state on successful connection
       this.reconnectAttempts = 0;
-      this.reconnectInterval = 2000;
+      this.reconnectInterval = this.initialReconnectInterval;
       if (this.onOpen) this.onOpen();
     };
 
