@@ -144,15 +144,15 @@ describe('App', () => {
       mockFindEndpoint.mockResolvedValue({ port: 9222, url: 'ws://localhost:9222' });
       mockConnect.mockResolvedValue();
 
-      // Only mock implementation for this test to avoid affecting others
+      // Mock listen to not call callback, allowing error handler to be triggered
       mockServer.listen.mockImplementationOnce((port, host, cb) => {
-           // Do not call cb, waiting for error
+           // Do not call cb to simulate async error condition
       });
 
       await app.initialize();
       const promise = app.start();
 
-      // Find the error handler attached to the server
+      // Trigger the error handler that was attached to the server
       const errorCall = mockOnServer.mock.calls.find(call => call[0] === 'error');
       if (errorCall) {
           const errorHandler = errorCall[1];

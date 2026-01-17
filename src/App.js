@@ -194,6 +194,7 @@ export class App {
     }
 
     // Close CDP client connection if present
+    // Try disconnect() first (newer API), fall back to close() if needed
     if (this.cdpClient) {
       try {
         if (typeof this.cdpClient.disconnect === 'function') {
