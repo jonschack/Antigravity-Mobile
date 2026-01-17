@@ -3,7 +3,16 @@
  */
 
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
-import { InputComponent } from '../../../public/js/components/Input.js';
+
+// Mock the ToastComponent before importing InputComponent
+const mockToastShow = jest.fn();
+jest.unstable_mockModule('../../../public/js/components/Toast.js', () => ({
+  ToastComponent: jest.fn().mockImplementation(() => ({
+    show: mockToastShow,
+  })),
+}));
+
+const { InputComponent } = await import('../../../public/js/components/Input.js');
 
 describe('InputComponent', () => {
   let input, btn, onSend;
@@ -17,9 +26,9 @@ describe('InputComponent', () => {
     input = document.getElementById('messageInput');
     btn = document.getElementById('sendBtn');
     onSend = jest.fn();
-
-    // Mock window.alert
-    global.alert = jest.fn();
+    
+    // Clear mock between tests
+    mockToastShow.mockClear();
   });
 
   test('should initialize and bind events', () => {
@@ -29,15 +38,24 @@ describe('InputComponent', () => {
   });
 
   test('should send message on button click', async () => {
-    new InputComponent('messageInput', 'sendBtn', onSend);
+    const component = new InputComponent('messageInput', 'sendBtn', onSend);
     input.value = 'hello';
     onSend.mockResolvedValue();
 
-    await btn.click(); // This is async in real life but simulated synchronously here mostly, but handler is async
+    // Trigger click
+    btn.click();
+    
+    // Wait for the async handler to complete
+    await new Promise(resolve => setTimeout(resolve, 0));
 
-    // We need to wait for the async handler if we want to check post-await state
-    // However, event dispatch is sync.
-    // Let's call handleSend directly to test logic easily or wait a tick.
+    // Verify send behavior
+    expect(onSend).toHaveBeenCalledWith('hello');
+    expect(input.value).toBe('');
+    
+    // Verify button state was managed during async operation
+    // After completion, button should be enabled with correct text
+    expect(btn.disabled).toBe(false);
+    expect(btn.textContent).toBe('Send');
   });
 
   test('should handle send logic successfully', async () => {
@@ -66,7 +84,7 @@ describe('InputComponent', () => {
 
     await component.handleSend();
 
-    expect(global.alert).toHaveBeenCalledWith('Failed to send: Network error');
+    expect(mockToastShow).toHaveBeenCalledWith('Failed to send: Network error', 'error');
     expect(btn.disabled).toBe(false); // Should reset
   });
 

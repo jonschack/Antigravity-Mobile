@@ -38,7 +38,37 @@ class App {
 
   initWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
+    
+    // Allow configuration of the WebSocket URL via a global or meta tag.
+    // - window.__WS_BASE_URL__ can be set to:
+    //   * a full ws:// or wss:// URL, or
+    //   * an absolute path (starting with "/"), or
+    //   * a relative path segment (without leading slash).
+    // - Alternatively, a <meta name="ws-base-url" content="..."> can be used.
+    let wsBasePath = window.__WS_BASE_URL__;
+    if (!wsBasePath) {
+      const meta = document.querySelector('meta[name="ws-base-url"]');
+      if (meta) {
+        wsBasePath = meta.getAttribute('content');
+      }
+    }
+
+    let wsUrl;
+    if (wsBasePath) {
+      if (/^wss?:\/\//.test(wsBasePath)) {
+        // Full WebSocket URL provided; use as-is.
+        wsUrl = wsBasePath;
+      } else if (wsBasePath.startsWith('/')) {
+        // Absolute path on current host.
+        wsUrl = `${protocol}//${window.location.host}${wsBasePath}`;
+      } else {
+        // Relative path segment on current host.
+        wsUrl = `${protocol}//${window.location.host}/${wsBasePath}`;
+      }
+    } else {
+      // Fallback to original behavior (root of current host).
+      wsUrl = `${protocol}//${window.location.host}`;
+    }
 
     this.wsService = new WebSocketService(
       wsUrl,

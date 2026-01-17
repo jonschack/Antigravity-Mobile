@@ -3,7 +3,7 @@ export class StateManager {
     this.state = {
       autoRefreshEnabled: true,
       userIsScrolling: false,
-      lastScrollPosition: 0,
+      autoRefreshDisabledByUser: false, // Track if user explicitly disabled it
     };
     this.listeners = [];
     this.scrollTimeout = null;
@@ -21,9 +21,12 @@ export class StateManager {
     this.listeners.forEach((listener) => listener(this.state));
   }
 
-  setAutoRefresh(enabled) {
+  setAutoRefresh(enabled, userInitiated = false) {
     if (this.state.autoRefreshEnabled !== enabled) {
       this.state.autoRefreshEnabled = enabled;
+      if (userInitiated && !enabled) {
+        this.state.autoRefreshDisabledByUser = true;
+      }
       this.notify();
     }
   }
@@ -48,9 +51,11 @@ export class StateManager {
       this.notify();
     }, 500);
 
-    // Re-enable auto refresh after 10s of idle
+    // Re-enable auto refresh after 10s of idle, but only if not explicitly disabled by user
     this.idleTimer = setTimeout(() => {
-      this.setAutoRefresh(true);
+      if (!this.state.autoRefreshDisabledByUser) {
+        this.setAutoRefresh(true, false); // false = not user-initiated
+      }
     }, 10000);
   }
 }
