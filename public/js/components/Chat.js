@@ -111,7 +111,11 @@ export class ChatComponent {
     this.content.innerHTML = '<div class="loading">Loading chat...</div>';
   }
 
-  setError(retryCallbackName) {
-    this.content.innerHTML = `<div class="loading">Failed to load chat. <button onclick="${retryCallbackName}()">Retry</button></div>`;
+  setError(retryCallback) {
+    this.content.innerHTML = '<div class="loading">Failed to load chat. <button type="button">Retry</button></div>';
+    const retryButton = this.content.querySelector('button');
+    if (retryButton && typeof retryCallback === 'function') {
+      retryButton.addEventListener('click', retryCallback);
+    }
   }
 }
