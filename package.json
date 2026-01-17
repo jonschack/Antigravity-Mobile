@@ -4,8 +4,8 @@
   "type": "module",
   "description": "Mobile web interface for monitoring Antigravity chat via visual snapshots",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
