@@ -43,7 +43,7 @@ class App {
     // - window.__WS_BASE_URL__ can be set to:
     //   * a full ws:// or wss:// URL, or
     //   * an absolute path (starting with "/"), or
-    //   * a relative path segment.
+    //   * a relative path segment (without leading slash).
     // - Alternatively, a <meta name="ws-base-url" content="..."> can be used.
     let wsBasePath = window.__WS_BASE_URL__;
     if (!wsBasePath) {
