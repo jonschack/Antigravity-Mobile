@@ -6,6 +6,9 @@ export function createWebSocketServer(server) {
   wss.on('connection', (ws) => {
     console.log('📱 Client connected');
 
+    ws.on('error', (err) => {
+      console.error('📱 WebSocket error:', err);
+    });
     ws.on('close', () => {
       console.log('📱 Client disconnected');
     });
