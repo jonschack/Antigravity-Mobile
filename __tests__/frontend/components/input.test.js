@@ -38,7 +38,7 @@ describe('InputComponent', () => {
   });
 
   test('should send message on button click', async () => {
-    const component = new InputComponent('messageInput', 'sendBtn', onSend);
+    new InputComponent('messageInput', 'sendBtn', onSend);
     input.value = 'hello';
     onSend.mockResolvedValue();
 
