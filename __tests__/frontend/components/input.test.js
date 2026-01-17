@@ -38,16 +38,24 @@ describe('InputComponent', () => {
   });
 
   test('should send message on button click', async () => {
-    new InputComponent('messageInput', 'sendBtn', onSend);
+    const component = new InputComponent('messageInput', 'sendBtn', onSend);
     input.value = 'hello';
     onSend.mockResolvedValue();
 
+    // Trigger click
     btn.click();
+    
     // Wait for the async handler to complete
     await new Promise(resolve => setTimeout(resolve, 0));
 
+    // Verify send behavior
     expect(onSend).toHaveBeenCalledWith('hello');
     expect(input.value).toBe('');
+    
+    // Verify button state was managed during async operation
+    // After completion, button should be enabled with correct text
+    expect(btn.disabled).toBe(false);
+    expect(btn.textContent).toBe('Send');
   });
 
   test('should handle send logic successfully', async () => {

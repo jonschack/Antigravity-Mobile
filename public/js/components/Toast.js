@@ -27,9 +27,27 @@ export class ToastComponent {
   }
 
   show(message, type = 'error', duration = 3000) {
+    // Check if a toast with the same message is already being displayed
+    const existingToasts = Array.from(this.container.children);
+    const isDuplicate = existingToasts.some(toast => toast.textContent === message);
+    
+    if (isDuplicate) {
+      return; // Don't create duplicate toast
+    }
+
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
+    
+    // Add accessibility attributes
+    if (type === 'error') {
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+    } else {
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+    }
+    
     toast.style.cssText = `
       background: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#3b82f6'};
       color: white;
