@@ -2,7 +2,11 @@ export class APIService {
   static async loadSnapshot() {
     const response = await fetch('/snapshot');
     if (!response.ok) throw new Error('Failed to load snapshot');
-    return await response.json();
+    try {
+      return await response.json();
+    } catch (err) {
+      throw new Error('Failed to load snapshot: invalid JSON response');
+    }
   }
 
   static async sendMessage(message) {
