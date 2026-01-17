@@ -1,7 +1,12 @@
 export class ToastComponent {
   constructor() {
-    this.container = this.createContainer();
-    document.body.appendChild(this.container);
+    const existingContainer = document.getElementById('toast-container');
+    if (existingContainer) {
+      this.container = existingContainer;
+    } else {
+      this.container = this.createContainer();
+      document.body.appendChild(this.container);
+    }
   }
 
   createContainer() {
