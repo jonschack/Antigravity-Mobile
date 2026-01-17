@@ -178,4 +178,74 @@ export class App {
       });
     });
   }
+
+  /**
+   * Stops the application and cleans up resources.
+   * @returns {Promise<void>}
+   */
+  async stop() {
+    // Stop polling if active
+    if (this.pollingManager && typeof this.pollingManager.stop === 'function') {
+      try {
+        this.pollingManager.stop();
+      } catch (err) {
+        console.error('Error while stopping polling manager:', err);
+      }
+    }
+
+    // Close CDP client connection if present
+    if (this.cdpClient) {
+      try {
+        if (typeof this.cdpClient.disconnect === 'function') {
+          await this.cdpClient.disconnect();
+        } else if (typeof this.cdpClient.close === 'function') {
+          await this.cdpClient.close();
+        }
+      } catch (err) {
+        console.error('Error while closing CDP client:', err);
+      }
+    }
+
+    // Close WebSocket connections and server
+    if (this.wss) {
+      try {
+        // Close all connected clients
+        this.wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            try {
+              client.close();
+            } catch (err) {
+              console.error('Error while closing WebSocket client:', err);
+            }
+          }
+        });
+
+        // Close the WebSocket server itself
+        await new Promise((resolve) => {
+          this.wss.close(() => {
+            resolve();
+          });
+        });
+      } catch (err) {
+        console.error('Error while closing WebSocket server:', err);
+      }
+    }
+
+    // Close HTTP server
+    if (this.server) {
+      try {
+        await new Promise((resolve, reject) => {
+          this.server.close((err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        });
+      } catch (err) {
+        console.error('Error while closing HTTP server:', err);
+      }
+    }
+  }
 }
