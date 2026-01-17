@@ -43,9 +43,7 @@ export class ToastComponent {
     setTimeout(() => {
       toast.style.animation = 'slideUp 0.3s ease-out';
       setTimeout(() => {
-        if (toast.parentElement) {
-          this.container.removeChild(toast);
-        }
+        toast.remove();
       }, 300);
     }, duration);
   }

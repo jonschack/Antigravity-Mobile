@@ -7,6 +7,7 @@ export class WebSocketService {
     this.ws = null;
     this.reconnectInterval = 2000;
     this.maxReconnectInterval = 30000; // Max 30 seconds
+    this.backoffMultiplier = 1.5; // Exponential backoff multiplier
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 10;
   }
@@ -45,7 +46,7 @@ export class WebSocketService {
 
       // Exponential backoff with jitter
       const backoffTime = Math.min(
-        this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts),
+        this.reconnectInterval * Math.pow(this.backoffMultiplier, this.reconnectAttempts),
         this.maxReconnectInterval
       );
       const jitter = Math.random() * 1000; // Add up to 1 second of jitter
