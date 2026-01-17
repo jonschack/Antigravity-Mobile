@@ -9,37 +9,15 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// TODO feature-config-module: Extract configuration constants into a separate config module (e.g., src/config.js).
-// TODO feature-config-module: Support environment variables for port configuration.
-const PORTS = [9000, 9001, 9002, 9003];
-const POLL_INTERVAL = 3000; // 3 seconds
+import { PORTS, POLL_INTERVAL } from './config.js';
+import { getJson } from './utils/http.js';
+import { hashString } from './utils/hashing.js';
 
 // TODO feature-app-bootstrap: Remove global state. Pass these dependencies via dependency injection or a context object.
 // Shared CDP connection
 let cdpConnection = null;
 let lastSnapshot = null;
 let lastSnapshotHash = null;
-
-// TODO feature-utils: Extract this helper into a generic HTTP utility module.
-// TODO feature-utils: Write unit tests for the utility module.
-// Helper: HTTP GET JSON
-function getJson(url) {
-  return new Promise((resolve, reject) => {
-    http
-      .get(url, (res) => {
-        let data = '';
-        res.on('data', (chunk) => (data += chunk));
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(e);
-          }
-        });
-      })
-      .on('error', reject);
-  });
-}
 
 // TODO feature-cdp-service: Create a CdpDiscoveryService class responsible for finding the debug port.
 // TODO feature-cdp-service: Write unit tests for CdpDiscoveryService.
@@ -229,19 +207,6 @@ async function injectMessage(cdp, text) {
   }
 
   return { ok: false, reason: 'no_context' };
-}
-
-// TODO feature-utils: Move to src/utils/hashing.js
-// TODO feature-utils: Write unit tests for hashing utility.
-// Simple hash function
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36);
 }
 
 // TODO feature-app-bootstrap: This should be part of the main application start sequence, not a standalone function.
