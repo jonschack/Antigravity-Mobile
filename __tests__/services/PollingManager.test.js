@@ -18,7 +18,7 @@ describe('PollingManager', () => {
   afterEach(() => {
     // Stop the manager first
     if (manager.timer) {
-        clearInterval(manager.timer);
+      clearInterval(manager.timer);
     }
     jest.useRealTimers();
   });
