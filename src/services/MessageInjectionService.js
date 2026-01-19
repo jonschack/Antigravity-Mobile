@@ -15,7 +15,7 @@ export class MessageInjectionService {
    */
   async inject(text) {
     if (!this.cdpClient || !this.cdpClient.contexts || this.cdpClient.contexts.length === 0) {
-        return { ok: false, reason: 'no_context' };
+      return { ok: false, reason: 'no_context' };
     }
 
     const script = getInjectionScript(text);
