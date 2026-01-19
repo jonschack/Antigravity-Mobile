@@ -110,20 +110,20 @@ async function main() {
 
     // Start background polling
     const pollingManager = new PollingManager(snapshotService, POLL_INTERVAL, (snapshot) => {
-        lastSnapshot = snapshot;
-        console.log(`📸 Snapshot updated`);
+      lastSnapshot = snapshot;
+      console.log(`📸 Snapshot updated`);
 
-        // Broadcast to all connected clients
-        wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(
-                JSON.stringify({
-                  type: 'snapshot_update',
-                  timestamp: new Date().toISOString(),
-                }),
-              );
-            }
-        });
+      // Broadcast to all connected clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: 'snapshot_update',
+              timestamp: new Date().toISOString(),
+            }),
+          );
+        }
+      });
     });
 
     pollingManager.start();
