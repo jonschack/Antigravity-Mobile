@@ -12,7 +12,7 @@ describe('hashing utils', () => {
     });
 
     it('should handle empty string', () => {
-        expect(hashString('')).toBe('0');
+      expect(hashString('')).toBe('0');
     });
   });
 });
