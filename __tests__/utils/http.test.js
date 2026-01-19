@@ -14,7 +14,7 @@ const { getJson } = await import('../../src/utils/http.js');
 describe('http utils', () => {
   describe('getJson', () => {
     beforeEach(() => {
-        mockGet.mockClear();
+      mockGet.mockClear();
     });
 
     it('should resolve with parsed JSON on success', async () => {
