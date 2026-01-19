@@ -29,11 +29,25 @@ export class CdpClient {
     });
 
     await new Promise((resolve, reject) => {
-      this.ws.on('open', () => {
+      const handleOpen = () => {
+        if (!this.ws) {
+          return;
+        }
+        this.ws.off('error', handleError);
         this.isConnected = true;
         resolve();
-      });
-      this.ws.on('error', reject);
+      };
+
+      const handleError = (err) => {
+        if (!this.ws) {
+          return;
+        }
+        this.ws.off('open', handleOpen);
+        reject(err);
+      };
+
+      this.ws.on('open', handleOpen);
+      this.ws.on('error', handleError);
     });
 
     // Enable runtime to get execution contexts
