@@ -7,10 +7,10 @@ describe('CdpDiscoveryService', () => {
   it('should return the port and url if found', async () => {
     const mockGetJson = jest.fn();
     mockGetJson.mockResolvedValueOnce([
-        {
-            url: 'file:///workbench.html',
-            webSocketDebuggerUrl: 'ws://127.0.0.1:9000/ws-uuid'
-        }
+      {
+        url: 'file:///workbench.html',
+        webSocketDebuggerUrl: 'ws://127.0.0.1:9000/ws-uuid'
+      }
     ]);
 
     const service = new CdpDiscoveryService(PORTS, mockGetJson);
@@ -26,10 +26,10 @@ describe('CdpDiscoveryService', () => {
     mockGetJson.mockRejectedValueOnce(new Error('Connection refused'));
     // Second port succeeds
     mockGetJson.mockResolvedValueOnce([
-        {
-            title: 'workbench',
-            webSocketDebuggerUrl: 'ws://127.0.0.1:9001/ws-uuid'
-        }
+      {
+        title: 'workbench',
+        webSocketDebuggerUrl: 'ws://127.0.0.1:9001/ws-uuid'
+      }
     ]);
 
     const service = new CdpDiscoveryService(PORTS, mockGetJson);

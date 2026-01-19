@@ -57,8 +57,8 @@ describe('CdpClient', () => {
     mockWsInstance.emit('message', JSON.stringify({ id: sendCall.id, result: {} }));
 
     mockWsInstance.emit('message', JSON.stringify({
-        method: 'Runtime.executionContextCreated',
-        params: { context: { id: 1, name: 'ctx1' } }
+      method: 'Runtime.executionContextCreated',
+      params: { context: { id: 1, name: 'ctx1' } }
     }));
 
     await connectPromise;
