@@ -5,5 +5,4 @@ export default {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   verbose: true,
-  injectGlobals: true,
 };
