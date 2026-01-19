@@ -60,7 +60,7 @@ async function createServer() {
     }
 
     if (!injectionService) {
-        return res.status(500).json({ error: 'Injection service not initialized' });
+      return res.status(500).json({ error: 'Injection service not initialized' });
     }
 
     const result = await injectionService.inject(message);
