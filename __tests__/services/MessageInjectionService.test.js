@@ -60,7 +60,9 @@ describe('MessageInjectionService', () => {
   });
 
   it('should correctly escape special characters in injection script', () => {
-      const script = getInjectionScript('Line 1\nLine "2"');
-      expect(script).toContain('Line 1\\nLine \\"2\\"');
+    const message = 'Line 1\nLine "2"';
+    const script = getInjectionScript(message);
+    const expectedEscaped = JSON.stringify(message);
+    expect(script).toContain(expectedEscaped);
   });
 });
