@@ -29,7 +29,7 @@ describe('SnapshotService', () => {
     const expectedResult = { html: '<div></div>', css: '' };
     mockCdpClient.call.mockResolvedValueOnce({
       result: {
-        value: expectedResult
+    value: expectedResult
       }
     });
 
