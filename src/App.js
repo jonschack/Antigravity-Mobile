@@ -112,7 +112,7 @@ export class App {
     }
 
     if (this.cdpClient) {
-      await this.cdpClient.close();
+      this.cdpClient.close();
       console.log('CDP Client closed');
     }
   }
