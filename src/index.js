@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { App } from './Application.js';
-import { PORTS, POLL_INTERVAL } from './config.js';
+import { BIND_ADDRESS, PORTS, POLL_INTERVAL } from './config.js';
 
 // Main
 async function main() {
@@ -9,6 +9,7 @@ async function main() {
       ports: PORTS,
       pollInterval: POLL_INTERVAL,
       port: process.env.PORT || 3000,
+      bindAddress: BIND_ADDRESS,
     };
 
     const app = new App(config);

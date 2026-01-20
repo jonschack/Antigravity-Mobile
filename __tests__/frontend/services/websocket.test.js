@@ -140,6 +140,8 @@ describe('WebSocketService', () => {
       service.connect();
       
       mockWebSocket.onopen();
+      // Clear the initial ping by simulating a pong response.
+      mockWebSocket.onmessage({ data: JSON.stringify({ type: 'pong' }) });
       mockWebSocket.send.mockClear();
       
       // Advance time to trigger next ping
