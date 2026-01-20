@@ -109,15 +109,18 @@ describe('App', () => {
     });
 
     it('should verify polling callback updates lastSnapshot and broadcasts', async () => {
-      const mockClient1 = { readyState: 1, send: jest.fn() }; // WebSocket.OPEN = 1
-      const mockClient2 = { readyState: 0, send: jest.fn() }; // WebSocket.CONNECTING = 0
+      const WEBSOCKET_OPEN = 1;
+      const WEBSOCKET_CONNECTING = 0;
+      const mockClient1 = { readyState: WEBSOCKET_OPEN, send: jest.fn() };
+      const mockClient2 = { readyState: WEBSOCKET_CONNECTING, send: jest.fn() };
       mockWss.clients = [mockClient1, mockClient2];
 
       await app.start();
 
       // Get the polling callback that was passed to PollingManager
-      const PollingManagerConstructor = (await import('../src/services/PollingManager.js')).PollingManager;
-      const pollingCallback = PollingManagerConstructor.mock.calls[0][2];
+      // PollingManager is called with (snapshotService, pollInterval, callback)
+      const PollingManagerMock = (await import('../src/services/PollingManager.js')).PollingManager;
+      const pollingCallback = PollingManagerMock.mock.calls[0][2];
 
       // Simulate a snapshot update
       const testSnapshot = { data: 'test-snapshot' };
