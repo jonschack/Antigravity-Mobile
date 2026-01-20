@@ -98,7 +98,12 @@ export class App {
     }
 
     if (this.wss) {
-      this.wss.close(() => console.log('WebSocket server closed'));
+      await new Promise((resolve) => {
+        this.wss.close(() => {
+          console.log('WebSocket server closed');
+          resolve();
+        });
+      });
     }
 
     if (this.server) {
