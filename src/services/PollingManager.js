@@ -20,6 +20,8 @@ export class PollingManager {
     this.lastSnapshotHash = null;
     this.timer = null;
     this.isRunning = false;
+    this.isPolling = false;
+    this.pendingReschedule = false;
     
     // Adaptive polling configuration
     this.minIntervalMs = options.minIntervalMs ?? intervalMs;
@@ -78,6 +80,10 @@ export class PollingManager {
    */
   _reschedule() {
     if (!this.isRunning) return;
+    if (this.isPolling) {
+      this.pendingReschedule = true;
+      return;
+    }
     if (this.timer) {
       clearTimeout(this.timer);
     }
@@ -89,8 +95,16 @@ export class PollingManager {
    * @private
    */
   async _pollAndReschedule() {
-    await this._poll();
+    this.isPolling = true;
+    try {
+      await this._poll();
+    } finally {
+      this.isPolling = false;
+    }
     this._adjustInterval();
+    if (this.pendingReschedule) {
+      this.pendingReschedule = false;
+    }
     this._scheduleNextPoll();
   }
 
