@@ -98,34 +98,34 @@ describe('App', () => {
     });
 
     it('should pass correct callbacks to createApp', async () => {
-        mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
-            port: 9222,
-            url: 'ws://localhost:9222',
-        });
+      mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
+        port: 9222,
+        url: 'ws://localhost:9222',
+      });
 
-        await app.start();
+      await app.start();
 
-        const createAppCall = mockCreateApp.mock.calls[0][0];
-        expect(createAppCall).toHaveProperty('getSnapshot');
-        expect(createAppCall).toHaveProperty('sendToCdp');
+      const createAppCall = mockCreateApp.mock.calls[0][0];
+      expect(createAppCall).toHaveProperty('getSnapshot');
+      expect(createAppCall).toHaveProperty('sendToCdp');
     });
   });
 
   describe('stop', () => {
     it('should stop services and close server', async () => {
-        // First start to set up state
-        mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
-            port: 9222,
-            url: 'ws://localhost:9222',
-        });
-        await app.start();
+      // First start to set up state
+      mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
+        port: 9222,
+        url: 'ws://localhost:9222',
+      });
+      await app.start();
 
-        await app.stop();
+      await app.stop();
 
-        expect(mockPollingManager.stop).toHaveBeenCalled();
-        expect(mockWss.close).toHaveBeenCalled();
-        expect(mockHttpServer.close).toHaveBeenCalled();
-        expect(mockCdpClient.close).toHaveBeenCalled();
+      expect(mockPollingManager.stop).toHaveBeenCalled();
+      expect(mockWss.close).toHaveBeenCalled();
+      expect(mockHttpServer.close).toHaveBeenCalled();
+      expect(mockCdpClient.close).toHaveBeenCalled();
     });
   });
 });
