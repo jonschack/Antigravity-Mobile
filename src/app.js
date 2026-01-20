@@ -25,7 +25,9 @@ export function createApp({ getSnapshot, sendToCdp }) {
     const { message } = req.body;
 
     if (!message) {
-      return res.status(400).json({ error: 'Message required' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Message required' });
     }
 
     try {
@@ -34,13 +36,18 @@ export function createApp({ getSnapshot, sendToCdp }) {
       if (result.ok) {
         res.json({ success: true, method: result.method });
       } else {
-        res.status(500).json({ success: false, reason: result.reason });
+        res.status(500).json({
+          success: false,
+          error: result.reason || result.error || 'Unknown error',
+        });
       }
     } catch (err) {
       if (err.message === 'CDP not connected') {
-        return res.status(503).json({ error: 'CDP not connected' });
+        return res
+          .status(503)
+          .json({ success: false, error: 'CDP not connected' });
       }
-      res.status(500).json({ success: false, reason: err.message });
+      res.status(500).json({ success: false, error: err.message });
     }
   });
 

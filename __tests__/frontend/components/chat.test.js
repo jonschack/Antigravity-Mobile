@@ -34,13 +34,14 @@ describe('ChatComponent', () => {
     expect(chat.fab).toBe(fab);
   });
 
-  test('should render content and restore scroll position if user was not at bottom', () => {
+  test('should restore scroll position after initial render when user is not at bottom', () => {
     const chat = new ChatComponent('chatContainer', 'chatContent', 'scrollToBottom');
-
-    // Simulate user scrolled up
-    container.scrollTop = 200;
-
     const data = { html: '<p>test</p>', css: 'p { color: red; }' };
+
+    chat.render(data);
+
+    // Simulate user scrolled up after first render
+    container.scrollTop = 200;
     chat.render(data);
 
     expect(content.innerHTML).toContain(data.html);
@@ -86,12 +87,12 @@ describe('ChatComponent', () => {
   });
 
   test('should scroll to bottom on FAB click', () => {
-      const chat = new ChatComponent('chatContainer', 'chatContent', 'scrollToBottom');
-      fab.click();
-      expect(container.scrollTo).toHaveBeenCalledWith({
-          top: 1000,
-          behavior: 'smooth',
-      });
+    const chat = new ChatComponent('chatContainer', 'chatContent', 'scrollToBottom');
+    fab.click();
+    expect(container.scrollTo).toHaveBeenCalledWith({
+      top: 1000,
+      behavior: 'smooth',
+    });
   });
 
   test('should set loading and error states', () => {

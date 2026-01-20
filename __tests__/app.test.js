@@ -34,7 +34,10 @@ describe('HTTP Layer', () => {
     it('should return 400 if message is missing', async () => {
       const response = await request(app).post('/send').send({});
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Message required' });
+      expect(response.body).toEqual({
+        success: false,
+        error: 'Message required',
+      });
     });
 
     it('should return 503 if CDP not connected (simulated via mock throwing error)', async () => {
@@ -43,7 +46,10 @@ describe('HTTP Layer', () => {
         .post('/send')
         .send({ message: 'hello' });
       expect(response.status).toBe(503);
-      expect(response.body).toEqual({ error: 'CDP not connected' });
+      expect(response.body).toEqual({
+        success: false,
+        error: 'CDP not connected',
+      });
     });
 
     it('should return success if message sent', async () => {
@@ -61,7 +67,10 @@ describe('HTTP Layer', () => {
         .post('/send')
         .send({ message: 'hello' });
       expect(response.status).toBe(500);
-      expect(response.body).toEqual({ success: false, reason: 'some reason' });
+      expect(response.body).toEqual({
+        success: false,
+        error: 'some reason',
+      });
     });
   });
 });

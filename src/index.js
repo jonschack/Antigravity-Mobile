@@ -153,6 +153,9 @@ async function captureSnapshot(cdp) {
 // TODO feature-injection-service: Write unit tests for MessageInjectionService, mocking the CDP connection.
 // Inject message into Antigravity
 async function injectMessage(cdp, text) {
+  const textLiteral = JSON.stringify(String(text))
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
   const EXPRESSION = `(async () => {
         const cancel = document.querySelector('[data-tooltip-id="input-send-button-cancel-tooltip"]');
         if (cancel && cancel.offsetParent !== null) return { ok:false, reason:"busy" };
@@ -160,18 +163,18 @@ async function injectMessage(cdp, text) {
         const editors = [...document.querySelectorAll('#cascade [data-lexical-editor="true"][contenteditable="true"][role="textbox"]')]
             .filter(el => el.offsetParent !== null);
         const editor = editors.at(-1);
-        if (!editor) return { ok:false, error:"editor_not_found" };
+        if (!editor) return { ok:false, reason:"editor_not_found" };
 
         editor.focus();
         document.execCommand?.("selectAll", false, null);
         document.execCommand?.("delete", false, null);
 
         let inserted = false;
-        try { inserted = !!document.execCommand?.("insertText", false, "${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"); } catch {}
+        try { inserted = !!document.execCommand?.("insertText", false, ${textLiteral}); } catch {}
         if (!inserted) {
-            editor.textContent = "${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}";
-            editor.dispatchEvent(new InputEvent("beforeinput", { bubbles:true, inputType:"insertText", data:"${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}" }));
-            editor.dispatchEvent(new InputEvent("input", { bubbles:true, inputType:"insertText", data:"${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}" }));
+            editor.textContent = ${textLiteral};
+            editor.dispatchEvent(new InputEvent("beforeinput", { bubbles:true, inputType:"insertText", data:${textLiteral} }));
+            editor.dispatchEvent(new InputEvent("input", { bubbles:true, inputType:"insertText", data:${textLiteral} }));
         }
 
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
