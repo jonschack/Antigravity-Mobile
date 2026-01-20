@@ -94,6 +94,10 @@ export class WebSocketService {
    */
   _sendPing() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      // Avoid overwriting an in-flight ping; wait for pong before sending another.
+      if (this.pendingPing !== null) {
+        return;
+      }
       this.pendingPing = Date.now();
       this.ws.send(JSON.stringify({ type: 'ping' }));
     }
