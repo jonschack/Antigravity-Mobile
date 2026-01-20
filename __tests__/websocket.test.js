@@ -32,4 +32,36 @@ describe('WebSocket Layer', () => {
       done(err);
     });
   });
+
+  it('should respond to ping with pong', (done) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    ws.on('open', () => {
+      ws.send(JSON.stringify({ type: 'ping' }));
+    });
+    ws.on('message', (data) => {
+      const message = JSON.parse(data.toString());
+      expect(message).toEqual({ type: 'pong' });
+      ws.close();
+      done();
+    });
+    ws.on('error', (err) => {
+      done(err);
+    });
+  });
+
+  it('should ignore malformed messages', (done) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    ws.on('open', () => {
+      // Send malformed JSON - should not crash
+      ws.send('not valid json');
+      // Give it time to process
+      setTimeout(() => {
+        ws.close();
+        done();
+      }, 100);
+    });
+    ws.on('error', (err) => {
+      done(err);
+    });
+  });
 });

@@ -189,3 +189,89 @@
           font-size: 14px;
         }
       }
+
+      /* Latency Indicator */
+      .latency-indicator {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        background: rgba(42, 42, 42, 0.9);
+        border-radius: 12px;
+        font-size: 11px;
+        z-index: 1000;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      .latency-indicator:hover {
+        opacity: 1;
+      }
+
+      .latency-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #666;
+        transition: background 0.3s;
+      }
+
+      .latency-text {
+        font-family: monospace;
+        color: #aaa;
+      }
+
+      .latency-indicator.good .latency-dot {
+        background: #4ade80;
+      }
+
+      .latency-indicator.good .latency-text {
+        color: #4ade80;
+      }
+
+      .latency-indicator.fair .latency-dot {
+        background: #fbbf24;
+      }
+
+      .latency-indicator.fair .latency-text {
+        color: #fbbf24;
+      }
+
+      .latency-indicator.poor .latency-dot {
+        background: #ef4444;
+      }
+
+      .latency-indicator.poor .latency-text {
+        color: #ef4444;
+      }
+
+      .latency-indicator.disconnected .latency-dot {
+        background: #666;
+      }
+
+      .latency-indicator.disconnected .latency-text {
+        color: #666;
+      }
+
+      .latency-indicator.good .latency-text::before {
+        content: "✓ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.fair .latency-text::before {
+        content: "⚠ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.poor .latency-text::before {
+        content: "✕ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.disconnected .latency-text::before {
+        content: "⏻ ";
+        font-weight: 600;
+      }

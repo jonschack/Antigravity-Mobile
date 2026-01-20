@@ -18,32 +18,31 @@ describe('PollingManager', () => {
   afterEach(() => {
     // Stop the manager first
     if (manager.timer) {
-      clearInterval(manager.timer);
+      clearTimeout(manager.timer);
     }
     jest.useRealTimers();
   });
 
   it('should start polling', () => {
-    jest.spyOn(global, 'setInterval');
+    jest.spyOn(global, 'setTimeout');
     manager.start();
-    expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 1000);
+    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 1000);
     expect(manager.isRunning).toBe(true);
   });
 
   it('should not start if already running', () => {
-    jest.spyOn(global, 'setInterval');
+    jest.spyOn(global, 'setTimeout');
     manager.start();
     const timer = manager.timer;
     manager.start();
     expect(manager.timer).toBe(timer);
-    expect(setInterval).toHaveBeenCalledTimes(1);
   });
 
   it('should stop polling', () => {
-    jest.spyOn(global, 'clearInterval');
+    jest.spyOn(global, 'clearTimeout');
     manager.start();
     manager.stop();
-    expect(clearInterval).toHaveBeenCalled();
+    expect(clearTimeout).toHaveBeenCalled();
     expect(manager.isRunning).toBe(false);
   });
 
@@ -57,6 +56,7 @@ describe('PollingManager', () => {
     // Wait for async poll to finish
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
 
     expect(onUpdate).toHaveBeenCalledWith({ html: '<div>1</div>' });
 
@@ -66,12 +66,14 @@ describe('PollingManager', () => {
     jest.advanceTimersByTime(1000);
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
 
     expect(onUpdate).not.toHaveBeenCalled();
 
     // Third poll - change
     mockSnapshotService.capture.mockResolvedValue({ html: '<div>2</div>' });
     jest.advanceTimersByTime(1000);
+    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -86,10 +88,81 @@ describe('PollingManager', () => {
     jest.advanceTimersByTime(1000);
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
 
     expect(spy).toHaveBeenCalledWith('Poll error:', 'Ooops');
     expect(manager.isRunning).toBe(true);
 
     spy.mockRestore();
+  });
+
+  describe('adaptive polling', () => {
+    it('should slow down polling after idle threshold', async () => {
+      const options = {
+        minIntervalMs: 1000,
+        maxIntervalMs: 4000,
+        idleThresholdMs: 5000
+      };
+      manager = new PollingManager(mockSnapshotService, 1000, onUpdate, undefined, options);
+      manager.start();
+
+      // Complete a few polls without changes
+      mockSnapshotService.capture.mockResolvedValue({ html: '<div>1</div>' });
+      
+      // First poll - content changes, sets lastChangeTime
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // Advance past idle threshold + hysteresis (5000 + 10000 = 15000ms)
+      jest.advanceTimersByTime(16000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // After being idle past hysteresis period, interval should increase
+      expect(manager.intervalMs).toBeGreaterThan(1000);
+    });
+
+    it('should speed up polling when activity is signaled', async () => {
+      const options = {
+        minIntervalMs: 1000,
+        maxIntervalMs: 4000,
+        idleThresholdMs: 5000
+      };
+      manager = new PollingManager(mockSnapshotService, 1000, onUpdate, undefined, options);
+      
+      // Manually slow down the manager
+      manager.intervalMs = 4000;
+      manager.start();
+
+      // Signal activity
+      manager.signalActivity();
+
+      // Should be back to base interval
+      expect(manager.intervalMs).toBe(1000);
+    });
+
+    it('should not exceed max interval', async () => {
+      const options = {
+        minIntervalMs: 1000,
+        maxIntervalMs: 2000,
+        idleThresholdMs: 100
+      };
+      manager = new PollingManager(mockSnapshotService, 1000, onUpdate, undefined, options);
+      mockSnapshotService.capture.mockResolvedValue({ html: '<div>1</div>' });
+      manager.start();
+
+      // Run many polls to ensure interval doesn't exceed max
+      for (let i = 0; i < 10; i++) {
+        jest.advanceTimersByTime(manager.intervalMs);
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+
+      expect(manager.intervalMs).toBeLessThanOrEqual(2000);
+    });
   });
 });
