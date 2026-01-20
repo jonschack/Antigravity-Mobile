@@ -72,15 +72,18 @@ describe('App', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     app = new App(config);
+    
+    // Restore default mock implementations
+    mockCdpClient.connect.mockResolvedValue(undefined);
+    mockHttpServer.listen.mockImplementation((port, host, cb) => cb && cb());
+    mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
+      port: 9222,
+      url: 'ws://localhost:9222',
+    });
   });
 
   describe('start', () => {
     it('should initialize services and start server', async () => {
-      mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
-        port: 9222,
-        url: 'ws://localhost:9222',
-      });
-
       await app.start();
 
       expect(mockCdpDiscoveryService.findEndpoint).toHaveBeenCalled();
@@ -98,26 +101,118 @@ describe('App', () => {
     });
 
     it('should pass correct callbacks to createApp', async () => {
-      mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
-        port: 9222,
-        url: 'ws://localhost:9222',
-      });
-
       await app.start();
 
       const createAppCall = mockCreateApp.mock.calls[0][0];
       expect(createAppCall).toHaveProperty('getSnapshot');
       expect(createAppCall).toHaveProperty('sendToCdp');
     });
+
+    it('should verify polling callback updates lastSnapshot and broadcasts', async () => {
+      const mockClient1 = { readyState: 1, send: jest.fn() }; // WebSocket.OPEN = 1
+      const mockClient2 = { readyState: 0, send: jest.fn() }; // WebSocket.CONNECTING = 0
+      mockWss.clients = [mockClient1, mockClient2];
+
+      await app.start();
+
+      // Get the polling callback that was passed to PollingManager
+      const PollingManagerConstructor = (await import('../src/services/PollingManager.js')).PollingManager;
+      const pollingCallback = PollingManagerConstructor.mock.calls[0][2];
+
+      // Simulate a snapshot update
+      const testSnapshot = { data: 'test-snapshot' };
+      pollingCallback(testSnapshot);
+
+      // Verify lastSnapshot was updated
+      expect(app.lastSnapshot).toEqual(testSnapshot);
+
+      // Verify only open WebSocket clients received the broadcast
+      expect(mockClient1.send).toHaveBeenCalledTimes(1);
+      const sentMessage = JSON.parse(mockClient1.send.mock.calls[0][0]);
+      expect(sentMessage).toMatchObject({
+        type: 'snapshot_update',
+      });
+      expect(sentMessage.timestamp).toBeDefined();
+      expect(typeof sentMessage.timestamp).toBe('string');
+      expect(mockClient2.send).not.toHaveBeenCalled();
+    });
+
+    it('should verify getSnapshot callback returns lastSnapshot', async () => {
+      await app.start();
+
+      // Set lastSnapshot
+      const testSnapshot = { data: 'test-data' };
+      app.lastSnapshot = testSnapshot;
+
+      // Get the getSnapshot callback
+      const createAppCall = mockCreateApp.mock.calls[0][0];
+      const getSnapshot = createAppCall.getSnapshot;
+
+      // Verify it returns the correct snapshot
+      expect(getSnapshot()).toEqual(testSnapshot);
+    });
+
+    it('should verify sendToCdp callback calls injection service', async () => {
+      mockMessageInjectionService.inject.mockResolvedValue({ success: true });
+
+      await app.start();
+
+      // Get the sendToCdp callback
+      const createAppCall = mockCreateApp.mock.calls[0][0];
+      const sendToCdp = createAppCall.sendToCdp;
+
+      // Call sendToCdp with a test message
+      const testMessage = 'test-message';
+      const result = await sendToCdp(testMessage);
+
+      // Verify it called the injection service
+      expect(mockMessageInjectionService.inject).toHaveBeenCalledWith(testMessage);
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should throw error in sendToCdp if CDP not connected', async () => {
+      await app.start();
+
+      // Simulate CDP disconnection
+      app.cdpClient.isConnected = false;
+
+      // Get the sendToCdp callback
+      const createAppCall = mockCreateApp.mock.calls[0][0];
+      const sendToCdp = createAppCall.sendToCdp;
+
+      // Verify it throws an error
+      await expect(sendToCdp('test')).rejects.toThrow('CDP not connected');
+    });
+
+    it('should handle CDP discovery failure', async () => {
+      mockCdpDiscoveryService.findEndpoint.mockRejectedValue(
+        new Error('No CDP endpoint found')
+      );
+
+      await expect(app.start()).rejects.toThrow('No CDP endpoint found');
+    });
+
+    it('should handle CDP connection failure', async () => {
+      mockCdpClient.connect.mockRejectedValue(
+        new Error('Connection failed')
+      );
+
+      await expect(app.start()).rejects.toThrow('Connection failed');
+    });
+
+    it('should handle server listen failure', async () => {
+      mockHttpServer.listen.mockImplementation((port, host, cb) => {
+        // Simulate listen error by throwing instead of calling callback
+        throw new Error('Port already in use');
+      });
+
+      await expect(app.start()).rejects.toThrow('Port already in use');
+    });
   });
 
   describe('stop', () => {
     it('should stop services and close server', async () => {
       // First start to set up state
-      mockCdpDiscoveryService.findEndpoint.mockResolvedValue({
-        port: 9222,
-        url: 'ws://localhost:9222',
-      });
       await app.start();
 
       await app.stop();
