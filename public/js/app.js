@@ -28,7 +28,7 @@ class App {
     });
 
     // Subscribe to state changes if needed
-    this.stateManager.subscribe((_state) => {
+    this.stateManager.subscribe(() => {
       // Logic for UI updates based on state changes if any specific ones are needed
       // Currently, state mainly controls whether we update or not
     });
