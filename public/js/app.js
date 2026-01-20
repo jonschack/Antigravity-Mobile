@@ -16,6 +16,7 @@ class App {
     });
 
     this.bindEvents();
+    // TODO feature-frontend-network-latency: Add a latency/ping indicator to the UI (e.g. next to the title) to show connection quality.
     this.initWebSocket();
   }
 

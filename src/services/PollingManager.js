@@ -24,6 +24,7 @@ export class PollingManager {
     if (this.isRunning) return;
     this.isRunning = true;
     this.timer = setInterval(() => this._poll(), this.intervalMs);
+    // TODO feature-backend-tailscale-optimizations: Consider adapting poll interval based on network latency or user activity to save bandwidth on metered remote connections.
   }
 
   /**

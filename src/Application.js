@@ -21,6 +21,7 @@ export class App {
 
   async start() {
     const { ports, pollInterval, port } = this.config;
+    // TODO feature-backend-tailscale-ip-detection: Import os module and detect network interfaces to find 'tailscale0' or 100.x.x.x IPs.
 
     // 1. Discovery
     const discoveryService = new CdpDiscoveryService(ports);
@@ -83,8 +84,10 @@ export class App {
 
     // 6. Listen
     return new Promise((resolve) => {
+      // TODO feature-backend-tailscale-bind: Use BIND_IP from config instead of hardcoded '0.0.0.0' to allow binding only to Tailscale interface for security.
       this.server.listen(port, '0.0.0.0', () => {
         console.log(`🚀 Server running on http://0.0.0.0:${port}`);
+        // TODO feature-backend-tailscale-ip-detection: Display the detected Tailscale IP here (e.g. http://100.x.y.z:9000) to make it easier for the user to connect.
         console.log(`📱 Access from mobile: http://<your-ip>:${port}`);
         resolve();
       });

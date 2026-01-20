@@ -37,3 +37,4 @@ const parsePollInterval = (value) => {
 
 export const PORTS = parsePorts(process.env.CDP_PORTS);
 export const POLL_INTERVAL = parsePollInterval(process.env.POLL_INTERVAL);
+// TODO feature-backend-tailscale-config: Add BIND_ADDRESS to exports to allow binding to specific interfaces (default to 0.0.0.0).
