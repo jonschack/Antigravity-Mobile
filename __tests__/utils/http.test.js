@@ -23,7 +23,7 @@ describe('http utils', () => {
 
       const requestMock = new EventEmitter();
 
-      mockGet.mockImplementation((url, callback) => {
+      mockGet.mockImplementation((_url, callback) => {
         callback(mockResponse);
         return requestMock;
       });
@@ -43,7 +43,7 @@ describe('http utils', () => {
       mockResponse.statusCode = 200;
       const requestMock = new EventEmitter();
 
-      mockGet.mockImplementation((url, callback) => {
+      mockGet.mockImplementation((_url, callback) => {
         callback(mockResponse);
         return requestMock;
       });
@@ -57,30 +57,28 @@ describe('http utils', () => {
     });
 
     it('should reject on http error', async () => {
-        const requestMock = new EventEmitter();
-        mockGet.mockImplementation(() => {
-            return requestMock;
-        });
+      const requestMock = new EventEmitter();
+      mockGet.mockImplementation(() => requestMock);
 
-        const promise = getJson('http://example.com/data');
-        requestMock.emit('error', new Error('Network error'));
+      const promise = getJson('http://example.com/data');
+      requestMock.emit('error', new Error('Network error'));
 
-        await expect(promise).rejects.toThrow('Network error');
+      await expect(promise).rejects.toThrow('Network error');
     });
 
     it('should reject on non-200 status code', async () => {
-        const mockResponse = new EventEmitter();
-        mockResponse.statusCode = 404;
-        const requestMock = new EventEmitter();
+      const mockResponse = new EventEmitter();
+      mockResponse.statusCode = 404;
+      const requestMock = new EventEmitter();
 
-        mockGet.mockImplementation((url, callback) => {
-          callback(mockResponse);
-          return requestMock;
-        });
+      mockGet.mockImplementation((_url, callback) => {
+        callback(mockResponse);
+        return requestMock;
+      });
 
-        const promise = getJson('http://example.com/data');
+      const promise = getJson('http://example.com/data');
 
-        await expect(promise).rejects.toThrow('Request failed with status code 404');
+      await expect(promise).rejects.toThrow('Request failed with status code 404');
     });
   });
 });
