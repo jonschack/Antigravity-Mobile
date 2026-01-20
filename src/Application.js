@@ -54,6 +54,10 @@ export class App {
         if (!this.injectionService) {
           throw new Error('Injection service not initialized');
         }
+        // Signal user activity to speed up polling
+        if (this.pollingManager) {
+          this.pollingManager.signalActivity();
+        }
         return await this.injectionService.inject(message);
       },
     });

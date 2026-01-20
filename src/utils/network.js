@@ -23,7 +23,6 @@ export function detectTailscaleIPs() {
       }
 
       // Check for Tailscale CGNAT range (100.64.0.0/10 -> 100.64.x.x to 100.127.x.x)
-      // Tailscale uses 100.x.x.x addresses in the 100.64.0.0/10 range
       if (isTailscaleCGNATAddress(addr.address)) {
         tailscaleIPs.push(addr.address);
       }

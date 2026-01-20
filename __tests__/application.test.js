@@ -17,6 +17,7 @@ const mockMessageInjectionService = {
 const mockPollingManager = {
   start: jest.fn(),
   stop: jest.fn(),
+  signalActivity: jest.fn(),
 };
 const mockExpressApp = {};
 const mockHttpServer = {
@@ -203,6 +204,23 @@ describe('App', () => {
       // Verify it called the injection service
       expect(mockMessageInjectionService.inject).toHaveBeenCalledWith(testMessage);
       expect(result).toEqual({ success: true });
+    });
+
+    it('should signal activity to polling manager when sending message', async () => {
+      mockMessageInjectionService.inject.mockResolvedValue({ success: true });
+      mockPollingManager.signalActivity = jest.fn();
+
+      await app.start();
+
+      // Get the sendToCdp callback
+      const createAppCall = mockCreateApp.mock.calls[0][0];
+      const sendToCdp = createAppCall.sendToCdp;
+
+      // Call sendToCdp
+      await sendToCdp('test-message');
+
+      // Verify it signaled activity
+      expect(mockPollingManager.signalActivity).toHaveBeenCalled();
     });
 
     it('should throw error in sendToCdp if CDP not connected', async () => {
