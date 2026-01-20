@@ -69,6 +69,8 @@ Open your browser in the bathroom and navigate to:
 http://<your-local-ip>:3000
 ```
 
-This is over local network, so it will not work if you are on a different network, unless you use a VPN or something.
+This is over local network, so it will not work if you are on a different network.
+
+**Want to access from outside your home network?** See [Remote Access Options](docs/REMOTE_ACCESS_OPTIONS.md) for a detailed comparison of VPN, Tailscale, Cloudflare Tunnel, and other approaches.
 
 The interface will automatically connect and display your Antigravity conversation in almost real-time.
