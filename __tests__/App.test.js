@@ -201,7 +201,7 @@ describe('App', () => {
     });
 
     it('should handle server listen failure', async () => {
-      mockHttpServer.listen.mockImplementation((port, host, cb) => {
+      mockHttpServer.listen.mockImplementation(() => {
         // Simulate listen error by throwing instead of calling callback
         throw new Error('Port already in use');
       });
