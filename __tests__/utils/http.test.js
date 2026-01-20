@@ -1,81 +1,84 @@
 import { jest } from '@jest/globals';
-import http from 'http';
-import EventEmitter from 'events';
-
-// Since we are mocking a built-in node module 'http', we should use jest.unstable_mockModule
-// for ESM support or just rely on jest.mock if using babel-jest (which we likely aren't).
-// However, with `NODE_OPTIONS=--experimental-vm-modules`, jest.mock often works for built-ins if hoisted properly.
-// But `http` is a default export or named export? In Node it is default mostly but also named.
-// Let's try mocking 'http' with unstable_mockModule which is safer for ESM.
-
-// We need to define the mock factory before importing the module under test.
+import { EventEmitter } from 'events';
 
 const mockGet = jest.fn();
-
-// Mock response object
-class MockResponse extends EventEmitter {}
 
 jest.unstable_mockModule('http', () => ({
   default: {
     get: mockGet,
   },
-  // If the code uses named import `import { get } from 'http'`, we need this too.
-  // The code uses `import http from 'http'; http.get(...)`.
 }));
 
-describe('HTTP Utility', () => {
-  let getJson;
+const { getJson } = await import('../../src/utils/http.js');
 
-  beforeEach(async () => {
-    mockGet.mockReset();
-    // Dynamic import to ensure mock is applied
-    const module = await import('../../src/utils/http.js');
-    getJson = module.getJson;
-  });
-
-  it('should resolve with parsed JSON on success', async () => {
-    const mockRes = new MockResponse();
-    mockGet.mockImplementation((url, callback) => {
-      callback(mockRes);
-      return { on: jest.fn() }; // return req object with error handler
+describe('http utils', () => {
+  describe('getJson', () => {
+    beforeEach(() => {
+      mockGet.mockClear();
     });
 
-    const promise = getJson('http://example.com');
+    it('should resolve with parsed JSON on success', async () => {
+      const mockResponse = new EventEmitter();
+      mockResponse.statusCode = 200;
 
-    // Simulate data
-    mockRes.emit('data', '{"key": "value"}');
-    mockRes.emit('end');
+      const requestMock = new EventEmitter();
 
-    const result = await promise;
-    expect(result).toEqual({ key: 'value' });
-    expect(mockGet).toHaveBeenCalledWith('http://example.com', expect.any(Function));
-  });
+      mockGet.mockImplementation((_url, callback) => {
+        callback(mockResponse);
+        return requestMock;
+      });
 
-  it('should reject on JSON parse error', async () => {
-    const mockRes = new MockResponse();
-    mockGet.mockImplementation((url, callback) => {
-      callback(mockRes);
-      return { on: jest.fn() };
+      const promise = getJson('http://example.com/data');
+
+      mockResponse.emit('data', '{"foo":');
+      mockResponse.emit('data', '"bar"}');
+      mockResponse.emit('end');
+
+      const result = await promise;
+      expect(result).toEqual({ foo: 'bar' });
     });
 
-    const promise = getJson('http://example.com');
+    it('should reject if JSON parsing fails', async () => {
+      const mockResponse = new EventEmitter();
+      mockResponse.statusCode = 200;
+      const requestMock = new EventEmitter();
 
-    mockRes.emit('data', 'invalid json');
-    mockRes.emit('end');
+      mockGet.mockImplementation((_url, callback) => {
+        callback(mockResponse);
+        return requestMock;
+      });
 
-    await expect(promise).rejects.toThrow();
-  });
+      const promise = getJson('http://example.com/data');
 
-  it('should reject on request error', async () => {
-    const mockReq = { on: jest.fn() };
-    mockGet.mockImplementation(() => mockReq);
+      mockResponse.emit('data', 'invalid json');
+      mockResponse.emit('end');
 
-    const promise = getJson('http://example.com');
+      await expect(promise).rejects.toThrow();
+    });
 
-    // Simulate error on request object
-    const errorCallback = mockReq.on.mock.calls.find(call => call[0] === 'error')[1];
-    errorCallback(new Error('Network error'));
+    it('should reject on http error', async () => {
+      const requestMock = new EventEmitter();
+      mockGet.mockImplementation(() => requestMock);
 
-    await expect(promise).rejects.toThrow('Network error');
+      const promise = getJson('http://example.com/data');
+      requestMock.emit('error', new Error('Network error'));
+
+      await expect(promise).rejects.toThrow('Network error');
+    });
+
+    it('should reject on non-200 status code', async () => {
+      const mockResponse = new EventEmitter();
+      mockResponse.statusCode = 404;
+      const requestMock = new EventEmitter();
+
+      mockGet.mockImplementation((_url, callback) => {
+        callback(mockResponse);
+        return requestMock;
+      });
+
+      const promise = getJson('http://example.com/data');
+
+      await expect(promise).rejects.toThrow('Request failed with status code 404');
+    });
   });
 });
