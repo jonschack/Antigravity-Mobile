@@ -1,5 +1,23 @@
 import { hashString } from '../utils/hashing.js';
 
+/**
+ * Multiplier for slowing down polling when idle.
+ * We use 1.5x (50% increase) as a balance between:
+ * - Quickly reducing bandwidth on metered connections (higher = faster reduction)
+ * - Avoiding jarring transitions for users (lower = smoother transitions)
+ * The 1.5x value was chosen to reach max interval (4x) after ~6 idle cycles,
+ * providing gradual degradation while still achieving meaningful savings.
+ */
+const IDLE_SLOWDOWN_MULTIPLIER = 1.5;
+
+/**
+ * Hysteresis threshold in milliseconds.
+ * After resuming base polling due to activity, we keep fast polling for this
+ * duration even if no new activity occurs. This prevents oscillation when
+ * users have intermittent activity patterns (e.g., sending a message every 35s).
+ */
+const HYSTERESIS_MS = 10000;
+
 export class PollingManager {
   /**
    * @param {import('./SnapshotService.js').SnapshotService} snapshotService
@@ -110,6 +128,7 @@ export class PollingManager {
 
   /**
    * Adjusts the polling interval based on activity and changes.
+   * Uses hysteresis to prevent rapid oscillation between fast and slow polling.
    * @private
    */
   _adjustInterval() {
@@ -117,10 +136,14 @@ export class PollingManager {
     const timeSinceActivity = now - this.lastActivityTime;
     const timeSinceChange = now - this.lastChangeTime;
 
-    // If idle for longer than threshold, gradually slow down
-    if (timeSinceActivity > this.idleThresholdMs && timeSinceChange > this.idleThresholdMs) {
-      // Increase interval by 50% up to max
-      this.intervalMs = Math.min(this.intervalMs * 1.5, this.maxIntervalMs);
+    // Apply hysteresis: after resuming fast polling, keep it fast for a grace period
+    // This prevents oscillation when users have intermittent activity patterns
+    const effectiveIdleThreshold = this.idleThresholdMs + HYSTERESIS_MS;
+
+    // If idle for longer than threshold (with hysteresis), gradually slow down
+    if (timeSinceActivity > effectiveIdleThreshold && timeSinceChange > effectiveIdleThreshold) {
+      // Increase interval by IDLE_SLOWDOWN_MULTIPLIER up to max
+      this.intervalMs = Math.min(this.intervalMs * IDLE_SLOWDOWN_MULTIPLIER, this.maxIntervalMs);
     } else {
       // Active: use base interval
       this.intervalMs = this.baseIntervalMs;

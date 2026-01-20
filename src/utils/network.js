@@ -1,8 +1,24 @@
 import os from 'os';
 
+// Known Tailscale interface name patterns across platforms
+const TAILSCALE_INTERFACE_PATTERNS = [
+  /^tailscale\d*$/i,  // Linux: tailscale0, tailscale1, etc.
+  /^utun\d+$/,        // macOS: utun0, utun1, etc. (Tailscale uses these)
+  /^ts\d+$/,          // Windows: ts0, ts1, etc.
+];
+
+/**
+ * Checks if an interface name matches known Tailscale patterns.
+ * @param {string} name - Interface name to check
+ * @returns {boolean} True if it matches a known Tailscale pattern
+ */
+function isTailscaleInterface(name) {
+  return TAILSCALE_INTERFACE_PATTERNS.some(pattern => pattern.test(name));
+}
+
 /**
  * Detects Tailscale IP addresses from network interfaces.
- * Looks for 'tailscale0' interface or IPs in the 100.x.x.x CGNAT range used by Tailscale.
+ * Looks for known Tailscale interface patterns or IPs in the 100.64.0.0/10 CGNAT range.
  * @returns {string[]} Array of detected Tailscale IP addresses
  */
 export function detectTailscaleIPs() {
@@ -16,8 +32,8 @@ export function detectTailscaleIPs() {
       // Skip IPv6 and internal addresses
       if (addr.family !== 'IPv4' || addr.internal) continue;
 
-      // Check for tailscale interface name
-      if (name.toLowerCase().includes('tailscale')) {
+      // Check for known Tailscale interface name patterns
+      if (isTailscaleInterface(name)) {
         tailscaleIPs.push(addr.address);
         continue;
       }

@@ -1,5 +1,8 @@
 import { WebSocketServer } from 'ws';
 
+// Maximum message size for WebSocket messages (1KB should be plenty for ping/pong)
+const MAX_MESSAGE_SIZE = 1024;
+
 export function createWebSocketServer(server) {
   const wss = new WebSocketServer({ server });
 
@@ -7,6 +10,12 @@ export function createWebSocketServer(server) {
     console.log('📱 Client connected');
 
     ws.on('message', (message) => {
+      // Reject oversized messages to prevent resource exhaustion
+      if (message.length > MAX_MESSAGE_SIZE) {
+        console.warn(`📱 Rejected oversized message (${message.length} bytes)`);
+        return;
+      }
+      
       try {
         const data = JSON.parse(message.toString());
         

@@ -255,3 +255,23 @@
       .latency-indicator.disconnected .latency-text {
         color: #666;
       }
+
+      .latency-indicator.good .latency-text::before {
+        content: "✓ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.fair .latency-text::before {
+        content: "⚠ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.poor .latency-text::before {
+        content: "✕ ";
+        font-weight: 600;
+      }
+
+      .latency-indicator.disconnected .latency-text::before {
+        content: "⏻ ";
+        font-weight: 600;
+      }

@@ -115,13 +115,13 @@ describe('PollingManager', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      // Advance past idle threshold
-      jest.advanceTimersByTime(6000);
+      // Advance past idle threshold + hysteresis (5000 + 10000 = 15000ms)
+      jest.advanceTimersByTime(16000);
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
 
-      // After being idle, interval should increase
+      // After being idle past hysteresis period, interval should increase
       expect(manager.intervalMs).toBeGreaterThan(1000);
     });
 

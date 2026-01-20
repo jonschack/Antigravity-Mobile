@@ -140,7 +140,12 @@ describe('WebSocketService', () => {
       service.connect();
       
       mockWebSocket.onopen();
+      
+      // Clear the initial ping
       mockWebSocket.send.mockClear();
+      
+      // Simulate pong response to clear pending ping
+      mockWebSocket.onmessage({ data: JSON.stringify({ type: 'pong' }) });
       
       // Advance time to trigger next ping
       jest.advanceTimersByTime(5000);
@@ -197,6 +202,36 @@ describe('WebSocketService', () => {
       
       service.latency = 100;
       expect(service.getLatency()).toBe(100);
+    });
+  });
+
+  describe('graceful disconnect', () => {
+    test('should not reconnect when disconnect() is called', () => {
+      const service = new WebSocketService('ws://test', onMessage, onOpen, onClose, onLatencyUpdate);
+      service.connect();
+      
+      mockWebSocket.onopen();
+      
+      // Disconnect gracefully
+      service.disconnect();
+      
+      expect(service.shouldReconnect).toBe(false);
+      expect(mockWebSocket.close).toHaveBeenCalled();
+    });
+
+    test('should clear reconnect timer on disconnect', () => {
+      const service = new WebSocketService('ws://test', onMessage, onOpen, onClose, onLatencyUpdate);
+      service.connect();
+      
+      mockWebSocket.onopen();
+      mockWebSocket.onclose(); // Triggers reconnect timer
+      
+      // Should have scheduled a reconnect
+      expect(service.reconnectTimer).not.toBeNull();
+      
+      service.disconnect();
+      
+      expect(service.reconnectTimer).toBeNull();
     });
   });
 });

@@ -69,4 +69,44 @@ describe('Config Module', () => {
       'BIND_ADDRESS must be a non-empty string',
     );
   });
+
+  it('should throw on invalid address format', async () => {
+    // Invalid: contains characters not allowed in hostnames or IP addresses
+    process.env.BIND_ADDRESS = 'invalid!address';
+    await expect(import('../src/config.js')).rejects.toThrow(
+      'BIND_ADDRESS must be a valid IPv4 address',
+    );
+  });
+
+  it('should throw on invalid IP octets', async () => {
+    // Invalid: octets > 255, and also not a valid hostname (pure numbers with dots)
+    process.env.BIND_ADDRESS = '256.1.1.1';
+    await expect(import('../src/config.js')).rejects.toThrow(
+      'BIND_ADDRESS must be a valid IPv4 address',
+    );
+  });
+
+  it('should accept valid hostname', async () => {
+    process.env.BIND_ADDRESS = 'localhost';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('localhost');
+  });
+
+  it('should accept single character hostname', async () => {
+    process.env.BIND_ADDRESS = 'a';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('a');
+  });
+
+  it('should accept IPv6 localhost (::1)', async () => {
+    process.env.BIND_ADDRESS = '::1';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('::1');
+  });
+
+  it('should accept full IPv6 address', async () => {
+    process.env.BIND_ADDRESS = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+  });
 });
