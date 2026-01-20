@@ -14,7 +14,7 @@ export function createWebSocketServer(server) {
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
         }
-      } catch (_err) {
+      } catch {
         // Ignore malformed messages
       }
     });
