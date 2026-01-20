@@ -7,6 +7,7 @@ import { CdpClient } from './services/CdpClient.js';
 import { SnapshotService } from './services/SnapshotService.js';
 import { MessageInjectionService } from './services/MessageInjectionService.js';
 import { PollingManager } from './services/PollingManager.js';
+import { getPrimaryTailscaleIP } from './utils/network.js';
 
 export class App {
   constructor(config) {
@@ -20,8 +21,10 @@ export class App {
   }
 
   async start() {
-    const { ports, pollInterval, port } = this.config;
-    // TODO feature-backend-tailscale-ip-detection: Import os module and detect network interfaces to find 'tailscale0' or 100.x.x.x IPs.
+    const { ports, pollInterval, port, bindAddress } = this.config;
+    
+    // Detect Tailscale IP for remote access
+    const tailscaleIP = getPrimaryTailscaleIP();
 
     // 1. Discovery
     const discoveryService = new CdpDiscoveryService(ports);
@@ -83,11 +86,13 @@ export class App {
     this.pollingManager.start();
 
     // 6. Listen
+    const host = bindAddress || '0.0.0.0';
     return new Promise((resolve) => {
-      // TODO feature-backend-tailscale-bind: Use BIND_IP from config instead of hardcoded '0.0.0.0' to allow binding only to Tailscale interface for security.
-      this.server.listen(port, '0.0.0.0', () => {
-        console.log(`🚀 Server running on http://0.0.0.0:${port}`);
-        // TODO feature-backend-tailscale-ip-detection: Display the detected Tailscale IP here (e.g. http://100.x.y.z:9000) to make it easier for the user to connect.
+      this.server.listen(port, host, () => {
+        console.log(`🚀 Server running on http://${host}:${port}`);
+        if (tailscaleIP) {
+          console.log(`🔗 Tailscale access: http://${tailscaleIP}:${port}`);
+        }
         console.log(`📱 Access from mobile: http://<your-ip>:${port}`);
         resolve();
       });

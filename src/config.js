@@ -35,6 +35,20 @@ const parsePollInterval = (value) => {
   return parsed;
 };
 
+const DEFAULT_BIND_ADDRESS = '0.0.0.0';
+
+const parseBindAddress = (value) => {
+  if (!value) return DEFAULT_BIND_ADDRESS;
+
+  // Basic validation: must be non-empty string
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    throw new Error('BIND_ADDRESS must be a non-empty string');
+  }
+
+  return trimmed;
+};
+
 export const PORTS = parsePorts(process.env.CDP_PORTS);
 export const POLL_INTERVAL = parsePollInterval(process.env.POLL_INTERVAL);
-// TODO feature-backend-tailscale-config: Add BIND_ADDRESS to exports to allow binding to specific interfaces (default to 0.0.0.0).
+export const BIND_ADDRESS = parseBindAddress(process.env.BIND_ADDRESS);

@@ -16,6 +16,7 @@ describe('Config Module', () => {
     const config = await import('../src/config.js');
     expect(config.PORTS).toEqual([9000, 9001, 9002, 9003]);
     expect(config.POLL_INTERVAL).toBe(3000);
+    expect(config.BIND_ADDRESS).toBe('0.0.0.0');
   });
 
   it('should use POLL_INTERVAL from environment variable', async () => {
@@ -47,6 +48,25 @@ describe('Config Module', () => {
     process.env.CDP_PORTS = '8000,abc';
     await expect(import('../src/config.js')).rejects.toThrow(
       'CDP_PORTS must be a comma-separated list of valid ports',
+    );
+  });
+
+  it('should use BIND_ADDRESS from environment variable', async () => {
+    process.env.BIND_ADDRESS = '127.0.0.1';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('127.0.0.1');
+  });
+
+  it('should trim whitespace from BIND_ADDRESS', async () => {
+    process.env.BIND_ADDRESS = '  192.168.1.1  ';
+    const config = await import('../src/config.js');
+    expect(config.BIND_ADDRESS).toBe('192.168.1.1');
+  });
+
+  it('should throw on empty BIND_ADDRESS', async () => {
+    process.env.BIND_ADDRESS = '   ';
+    await expect(import('../src/config.js')).rejects.toThrow(
+      'BIND_ADDRESS must be a non-empty string',
     );
   });
 });

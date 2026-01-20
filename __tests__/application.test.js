@@ -29,6 +29,7 @@ const mockWss = {
 };
 const mockCreateApp = jest.fn(() => mockExpressApp);
 const mockCreateWebSocketServer = jest.fn(() => mockWss);
+const mockGetPrimaryTailscaleIP = jest.fn(() => null);
 
 // Mock modules
 jest.unstable_mockModule('../src/services/CdpDiscoveryService.js', () => ({
@@ -51,6 +52,9 @@ jest.unstable_mockModule('../src/app.js', () => ({
 }));
 jest.unstable_mockModule('../src/websocket.js', () => ({
   createWebSocketServer: mockCreateWebSocketServer,
+}));
+jest.unstable_mockModule('../src/utils/network.js', () => ({
+  getPrimaryTailscaleIP: mockGetPrimaryTailscaleIP,
 }));
 jest.unstable_mockModule('http', () => ({
   default: {
@@ -80,6 +84,7 @@ describe('App', () => {
       port: 9222,
       url: 'ws://localhost:9222',
     });
+    mockGetPrimaryTailscaleIP.mockReturnValue(null);
   });
 
   describe('start', () => {
@@ -98,6 +103,33 @@ describe('App', () => {
         '0.0.0.0',
         expect.any(Function),
       );
+    });
+
+    it('should use bindAddress from config when provided', async () => {
+      const configWithBind = { ...config, bindAddress: '127.0.0.1' };
+      app = new App(configWithBind);
+
+      await app.start();
+
+      expect(mockHttpServer.listen).toHaveBeenCalledWith(
+        3000,
+        '127.0.0.1',
+        expect.any(Function),
+      );
+    });
+
+    it('should detect and log Tailscale IP when available', async () => {
+      mockGetPrimaryTailscaleIP.mockReturnValue('100.100.1.1');
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      await app.start();
+
+      expect(mockGetPrimaryTailscaleIP).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Tailscale access: http://100.100.1.1:3000')
+      );
+
+      consoleSpy.mockRestore();
     });
 
     it('should pass correct callbacks to createApp', async () => {
