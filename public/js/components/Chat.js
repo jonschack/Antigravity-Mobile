@@ -4,6 +4,7 @@ export class ChatComponent {
     this.content = document.getElementById(contentId);
     this.fab = document.getElementById(fabId);
     this.scrollTimeout = null;
+    this.hasRendered = false;
 
     this.bindEvents();
   }
@@ -93,11 +94,12 @@ export class ChatComponent {
         `;
 
     // Restore scroll position or scroll to bottom
-    if (isNearBottom || scrollPos === 0) {
+    if (!this.hasRendered || isNearBottom) {
       this.scrollToBottom();
     } else {
       this.container.scrollTop = scrollPos;
     }
+    this.hasRendered = true;
   }
 
   scrollToBottom() {

@@ -59,7 +59,7 @@ jest.unstable_mockModule('http', () => ({
 }));
 
 // Import App after mocking
-const { App } = await import('../src/App.js');
+const { App } = await import('../src/Application.js');
 
 describe('App', () => {
   let app;

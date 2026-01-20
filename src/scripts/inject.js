@@ -1,6 +1,8 @@
 export function getInjectionScript(text) {
   // Use JSON.stringify to safely escape the text for inclusion in the script string
-  const safeText = JSON.stringify(text);
+  const safeText = JSON.stringify(String(text))
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 
   return `(async () => {
         const cancel = document.querySelector('[data-tooltip-id="input-send-button-cancel-tooltip"]');
@@ -9,7 +11,7 @@ export function getInjectionScript(text) {
         const editors = [...document.querySelectorAll('#cascade [data-lexical-editor="true"][contenteditable="true"][role="textbox"]')]
             .filter(el => el.offsetParent !== null);
         const editor = editors.at(-1);
-        if (!editor) return { ok:false, error:"editor_not_found" };
+        if (!editor) return { ok:false, reason:"editor_not_found" };
 
         editor.focus();
         document.execCommand?.("selectAll", false, null);

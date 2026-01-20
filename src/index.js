@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { App } from './App.js';
+import { App } from './Application.js';
 import { PORTS, POLL_INTERVAL } from './config.js';
 
 // Main
@@ -20,14 +20,16 @@ async function main() {
         await app.stop();
         process.exit(0);
       } catch (err) {
-        console.error('❌ Error during shutdown' + (signal ? ` (${signal})` : '') + ':', err);
+        console.error(
+          '❌ Error during shutdown' + (signal ? ` (${signal})` : '') + ':',
+          err,
+        );
         process.exit(1);
       }
     };
 
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
-
   } catch (err) {
     console.error('❌ Fatal error:', err.message);
     process.exit(1);

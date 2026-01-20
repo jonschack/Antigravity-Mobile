@@ -13,8 +13,14 @@ export class APIService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.reason || 'Unknown error');
+      let errorMessage = 'Unknown error';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || error.reason || errorMessage;
+      } catch (_e) {
+        // Ignore parse errors and use default message
+      }
+      throw new Error(errorMessage);
     }
   }
 }
