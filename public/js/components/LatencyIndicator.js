@@ -7,8 +7,40 @@ export class LatencyIndicator {
    * @param {string} elementId - The ID of the element to render the indicator
    */
   constructor(elementId) {
+    this.elementId = elementId;
     this.element = document.getElementById(elementId);
     this.latency = null;
+
+    if (!this.element && typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `LatencyIndicator: element with id "${elementId}" not found at initialization time. ` +
+        'Call attach() after the element is added to the DOM.'
+      );
+    }
+  }
+
+  /**
+   * Attempts to (re)attach the indicator to a DOM element.
+   * Use this if the target element is added to the DOM after construction.
+   * @param {string} [elementId] - Optional element ID to attach to; defaults to the original ID.
+   */
+  attach(elementId) {
+    const targetId = elementId || this.elementId;
+    if (!targetId) {
+      return;
+    }
+
+    this.elementId = targetId;
+    this.element = document.getElementById(targetId);
+
+    if (!this.element && typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `LatencyIndicator: element with id "${targetId}" not found when calling attach().`
+      );
+      return;
+    }
+
+    this._render();
   }
 
   /**
