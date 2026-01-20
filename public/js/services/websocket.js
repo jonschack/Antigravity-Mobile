@@ -9,6 +9,7 @@ export class WebSocketService {
   }
 
   connect() {
+    // TODO feature-frontend-connection-resilience: Implement exponential backoff strategy for reconnection (start at 1s, cap at 30s) instead of fixed interval.
     this.ws = new WebSocket(this.url);
 
     this.ws.onopen = () => {
