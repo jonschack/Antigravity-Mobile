@@ -15,9 +15,14 @@ async function main() {
     await app.start();
 
     // Handle graceful shutdown
-    const shutdown = async () => {
-      await app.stop();
-      process.exit(0);
+    const shutdown = async (signal) => {
+      try {
+        await app.stop();
+        process.exit(0);
+      } catch (err) {
+        console.error('❌ Error during shutdown' + (signal ? ` (${signal})` : '') + ':', err);
+        process.exit(1);
+      }
     };
 
     process.on('SIGINT', shutdown);
