@@ -3,6 +3,7 @@ import { APIService } from './services/api.js';
 import { WebSocketService } from './services/websocket.js';
 import { ChatComponent } from './components/Chat.js';
 import { InputComponent } from './components/Input.js';
+import { LatencyIndicator } from './components/LatencyIndicator.js';
 
 class App {
   constructor() {
@@ -14,9 +15,9 @@ class App {
       // Refresh after short delay, similar to original code
       setTimeout(() => this.loadSnapshot(), 500);
     });
+    this.latencyIndicator = new LatencyIndicator('latencyIndicator');
 
     this.bindEvents();
-    // TODO feature-frontend-network-latency: Add a latency/ping indicator to the UI (e.g. next to the title) to show connection quality.
     this.initWebSocket();
   }
 
@@ -27,7 +28,7 @@ class App {
     });
 
     // Subscribe to state changes if needed
-    this.stateManager.subscribe((state) => {
+    this.stateManager.subscribe((_state) => {
       // Logic for UI updates based on state changes if any specific ones are needed
       // Currently, state mainly controls whether we update or not
     });
@@ -50,6 +51,10 @@ class App {
       },
       () => {
         // onClose
+      },
+      (latency) => {
+        // onLatencyUpdate
+        this.latencyIndicator.update(latency);
       }
     );
     this.wsService.connect();
